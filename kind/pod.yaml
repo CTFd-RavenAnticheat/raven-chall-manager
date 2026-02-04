@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pcap-core-pod
+spec:
+  containers:
+  - name: recovery
+    image: busybox
+    command: ["sleep", "3600000"]
+    volumeMounts:
+    - name: data
+      mountPath: /captures
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: pcap-core

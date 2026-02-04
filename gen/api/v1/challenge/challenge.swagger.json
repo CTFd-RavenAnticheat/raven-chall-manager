@@ -1,0 +1,440 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "api/v1/challenge/challenge.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "ChallengeStore"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/v1/challenge": {
+      "get": {
+        "summary": "Query all challenges information and their instances running.",
+        "operationId": "ChallengeStore_QueryChallenge",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/challengeChallenge"
+                },
+                "error": {
+                  "$ref": "#/definitions/rpcStatus"
+                }
+              },
+              "title": "Stream result of challengeChallenge"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "ChallengeStore"
+        ]
+      },
+      "post": {
+        "summary": "Before spinning up instances of a challenge, you need to register it.\nThat is the goal of CreateChallenge.\nIf will perform validation on your inputs and especially on the scenario.",
+        "operationId": "ChallengeStore_CreateChallenge",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/challengeChallenge"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "The request to create a challenge.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/challengeCreateChallengeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ChallengeStore"
+        ]
+      }
+    },
+    "/api/v1/challenge/{id}": {
+      "get": {
+        "summary": "Once saved, you can retrieve the challenge information.\nIf it has not been created yet, returns an error.\nIf the challenge has instances running, returns their information too.",
+        "operationId": "ChallengeStore_RetrieveChallenge",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/challengeChallenge"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "The challenge identifier.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ChallengeStore"
+        ]
+      },
+      "delete": {
+        "summary": "At the end of its life, a challenge can be deleted.\nIf it has running instances, it will spin them down.",
+        "operationId": "ChallengeStore_DeleteChallenge",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "The challenge identifier.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ChallengeStore"
+        ]
+      },
+      "patch": {
+        "summary": "A challenge can evolve through time, and on live.\nThe goal of UpdateChallenge is to handle those evolves.\nIf the until changes, sets it up to running instances.\nIf the timeout changes, set running instances until to the last renewal increased by\nthe new timeout.\nIf the scenario changes, update the running instances, but even if this is\ntechnically possible we do not recommend it has we do not look for infrastructure\ndrift.",
+        "operationId": "ChallengeStore_UpdateChallenge",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/challengeChallenge"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "The challenge identifier.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ChallengeStoreUpdateChallengeBody"
+            }
+          }
+        ],
+        "tags": [
+          "ChallengeStore"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "ChallengeStoreUpdateChallengeBody": {
+      "type": "object",
+      "properties": {
+        "scenario": {
+          "type": "string",
+          "example": "registry.lan/category/challenge-scenario:v0.1.0@sha256:a0b1...c2d3",
+          "description": "The OCI reference to get the deployment scenario from, i.e. the Pulumi\ninfrastructure factory.\nExtracted files are the ones with metadata `application/vnd.ctfer-io.file`.\nIf specified, will updates running instances if the old and new tag and/or\ndigests differs.\n\nTo ensure stability through deployments, we highly recommend you pin\nthe tag and the digest."
+        },
+        "updateStrategy": {
+          "$ref": "#/definitions/challengeUpdateStrategy",
+          "description": "If specified, sets the update strategy to adopt in case the challenge has running\ninstances.\nDefault to an update in place."
+        },
+        "timeout": {
+          "type": "string",
+          "description": "The timeout after which the janitor will have permission to delete the instances."
+        },
+        "until": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date after which the janitor will have permission to delete the instances."
+        },
+        "updateMask": {
+          "type": "string"
+        },
+        "additional": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "A key=value additional configuration to pass to the instance when created."
+        },
+        "min": {
+          "type": "string",
+          "format": "int64",
+          "example": 1,
+          "description": "Min from the pooler feature.\nDetermine the minimum number of instances we want to pre-provision, and make\navailable for claiming later."
+        },
+        "max": {
+          "type": "string",
+          "format": "int64",
+          "example": 1,
+          "description": "Max from the pooler feature.\nDetermine the maximum number of instances that needs to be deployed until we\nstop pre-provisioning ones in the pool."
+        }
+      },
+      "description": "The request to update a challenge."
+    },
+    "challengeChallenge": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": 1,
+          "description": "The challenge identifier."
+        },
+        "scenario": {
+          "type": "string",
+          "example": "registry.lan/category/challenge-scenario:v0.1.0@sha256:a0b1...c2d3",
+          "description": "The OCI reference to get the deployment scenario from, i.e. the Pulumi\ninfrastructure factory."
+        },
+        "timeout": {
+          "type": "string",
+          "description": "The timeout after which the janitor will have permission to delete\nthe instances."
+        },
+        "until": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date after which the janitor will have permission to delete\nthe instances."
+        },
+        "instances": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/instanceInstance"
+          },
+          "description": "The challenge running instances."
+        },
+        "additional": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "A key=value additional configuration to pass to the instance when created."
+        },
+        "min": {
+          "type": "string",
+          "format": "int64",
+          "example": 1,
+          "description": "Min from the pooler feature.\nDetermine the minimum number of instances we want to pre-provision, and make\navailable for claiming later."
+        },
+        "max": {
+          "type": "string",
+          "format": "int64",
+          "example": 1,
+          "description": "Max from the pooler feature.\nDetermine the maximum number of instances that needs to be deployed until we\nstop pre-provisioning ones in the pool."
+        }
+      },
+      "description": "The challenge object that the chall-manager exposes.\nNotice it differs from the internal representation, as it also handles\nfilesystem-related information.",
+      "required": [
+        "id",
+        "scenario"
+      ]
+    },
+    "challengeCreateChallengeRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": 1,
+          "description": "The challenge identifier."
+        },
+        "scenario": {
+          "type": "string",
+          "example": "registry.lan/category/challenge-scenario:v0.1.0@sha256:a0b1...c2d3",
+          "description": "The OCI reference to get the deployment scenario from, i.e. the Pulumi\ninfrastructure factory.\nExtracted files are the ones with metadata `application/vnd.ctfer-io.file`.\n\nTo ensure stability through deployments, we highly recommend you pin\nthe tag and the digest."
+        },
+        "timeout": {
+          "type": "string",
+          "description": "The timeout after which the janitor will have permission to delete the instance."
+        },
+        "until": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date after which the janitor will have permission to delete the instance."
+        },
+        "additional": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "A key=value additional configuration to pass to the instance when created."
+        },
+        "min": {
+          "type": "string",
+          "format": "int64",
+          "example": 1,
+          "description": "Min from the pooler feature.\nDetermine the minimum number of instances we want to pre-provision, and make\navailable for claiming later."
+        },
+        "max": {
+          "type": "string",
+          "format": "int64",
+          "example": 1,
+          "description": "Max from the pooler feature.\nDetermine the maximum number of instances that needs to be deployed until we\nstop pre-provisioning ones in the pool."
+        }
+      },
+      "description": "The request to create a challenge.",
+      "required": [
+        "id",
+        "scenario"
+      ]
+    },
+    "challengeUpdateStrategy": {
+      "type": "string",
+      "enum": [
+        "update_in_place",
+        "blue_green",
+        "recreate"
+      ],
+      "default": "update_in_place",
+      "description": "The UpdateStrategy to use in case of a Challenge scenario update with running instances.\nDefault strategy is the update-in-place.\n\n - update_in_place: update_in_place updates the existing state based on the new stack in the scenario.\nThis update strategy provide high availability with low update costs.\n - blue_green: blue_green spins up a second instance of the scenario in parallel and once up,\ndelete the previous one for players to shift.\nThis update strategy provide high availability with high update costs due to infra\ndeduplication.\n - recreate: recreate delete the previous instance then spins up a fresh instance of the scenario.\nThis update strategy provide no availability guarantee with medium update costs due\nto intensive create/delete operations. It should be used at a last relief, for\ninstance if the update is inconsistent and the outcomes are not predictable."
+    },
+    "instanceInstance": {
+      "type": "object",
+      "properties": {
+        "challengeId": {
+          "type": "string",
+          "example": 1,
+          "title": "The challenge identifier"
+        },
+        "sourceId": {
+          "type": "string",
+          "example": 1,
+          "description": "The source (user/team) identifier."
+        },
+        "since": {
+          "type": "string",
+          "format": "date-time",
+          "example": 1,
+          "description": "The time since when the instance is running."
+        },
+        "lastRenew": {
+          "type": "string",
+          "format": "date-time",
+          "example": 1,
+          "description": "The last time the instance has been renewed."
+        },
+        "until": {
+          "type": "string",
+          "format": "date-time",
+          "example": 1,
+          "description": "The time the instance will \"die\" i.e. be destroyed by the janitor."
+        },
+        "connectionInfo": {
+          "type": "string",
+          "example": 1,
+          "description": "The connection information that is given to the players in order\nto reach their instance."
+        },
+        "flag": {
+          "type": "string",
+          "example": 1,
+          "description": "If specified, the flag that validates the challenge instance.\nThis avoids shareflag, but don't block sharing solving strategy/write-up.\nDEPRECATED: #950 showed the need for multiple flags, so please migrate to it."
+        },
+        "flags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A list of flags that validates the challenge instance.\nThis avoids shareflag, but don't block sharing solving strategy/write-up."
+        },
+        "additional": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "A key=value additional configuration to pass to the instance when created."
+        }
+      },
+      "description": "The challenge instance object that the chall-manager exposes.\nNotice it differs from the internal representation, as it handles\nfilesystem-related information.",
+      "required": [
+        "challengeId",
+        "sourceId",
+        "since",
+        "lastRenew",
+        "connectionInfo"
+      ]
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

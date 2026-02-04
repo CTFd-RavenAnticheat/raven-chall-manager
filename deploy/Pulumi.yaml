@@ -1,0 +1,109 @@
+name: chall-manager
+runtime: go
+description: IaC for a Kubernetes production-grade deployment of a Chall-Manager service.
+config:
+  namespace:
+    type: string
+    description: If set, defines the namespace the chall-manager should deploy into (will create it). If not set, will create a random one.
+    default: ""
+  tag:
+    type: string
+    description: The Docker images tag to deploy Chall-Manager from. (Optional)
+    default: latest
+  registry:
+    type: string
+    description: The Docker registry to download chall-manager images from.
+    default: ""
+  log-level:
+    type: string
+    description: The log level to use.
+    default: info
+  etcd.replicas:
+    type: integer
+    description: The etcd number of replicas in the cluster. If none set, will deploy Chall-Manager will a local lock. Could be alternatively set with `etcd-replicas` (Optional)
+    default: 0
+  replicas:
+    type: integer
+    description: The Chall-Manager replicas running in parallel. (Optional)
+    default: 1
+  janitor.cron:
+    type: string
+    description: The cron to which run the janitor. (Optional)
+    default: ""
+  janitor.ticker:
+    type: string
+    description: "The frequency at which the janitor is triggered: 1s, 1m, ... (Optional)"
+    default: ""
+  janitor.mode:
+    type: string
+    description: The mode to deploy the janitor in. Could be cron or ticker. (Optional)
+    default: cron
+  swagger:
+    type: boolean
+    description: If set to true, turns on the REST API Swagger UI. Do not activate in production. (Optional)
+    default: false
+  pvc-access-mode:
+    type: string
+    description: The access mode to use for the PVC. (Optional)
+    default: ReadWriteMany
+  pvc-storage-size:
+    type: string
+    description: Configure storage size of the PVC Chall-Manager writes into. (Optional)
+    default: 2Gi
+  expose:
+    type: boolean
+    description: Whether to expose to external networking the Chall-Manager service. DO NOT TURN ON IF YOU DON'T UNDERSTAND THE IMPACT.
+    default: false
+  romeo-claim-name:
+    type: string
+    description: If set, will turn on the coverage export of Chall-Manager for later download.
+    default: ""
+  kubeconfig:
+    type: string
+    secret: true
+    description: A kubeconfig to use rather than the default ServiceAccount.
+    default: ""
+  requests.cpu:
+    type: string
+    description: The number of CPUs to use.
+    default: "1.0"
+  requests.memory:
+    type: string
+    description: The memory size to use.
+    default: "1Gi"
+  limits.cpu:
+    type: string
+    description: The maximum number of CPUs to use.
+    default: "4.0"
+  limits.memory:
+    type: string
+    description: The maximum memory size to use.
+    default: "5Gi"
+  cm-to-apiserver-template:
+    type: string
+    description: An optional YAML template to redefine the NetworkPolicy format for Chall-Manager pods to reach the kube-apiserver. If not set, defaults to a cilium.v2 CiliumNetworkPolicy. Can access the deployment namespace with `.Namespace` and the Chall-Manager pod labels with `.PodLabels`. (Optional)
+    default: ""
+  otel.endpoint:
+    type: string
+    description: The OpenTelemetry Collector endpoint to set signals to. (Optional)
+    default: ""
+  otel.insecure:
+    type: boolean
+    description: If set to true, send signals to the OpenTelemetry Collector in plain text. (Optional)
+    default: false
+  oci.username:
+    type: string
+    description: Define the OCI registry username to use.
+    default: ""
+  oci.password:
+    type: string
+    description: Define the OCI registry password to use.
+    default: ""
+  oci.insecure:
+    type: boolean
+    description: If set to true, use HTTP rather than HTTPS to reach the OCI registry.
+    default: false
+
+author: CTFer.io
+license: Apache-2.0
+website: https://ctfer.io

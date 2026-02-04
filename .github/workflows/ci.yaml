@@ -1,0 +1,134 @@
+name: CI
+
+on:
+  push:
+    paths:
+      - '.github/workflows/*.yaml'
+      - '**.go'
+      - '**.proto'
+      - '**/go.mod'
+  pull_request:
+    paths:
+      - '.github/workflows/*.yaml'
+      - '**.go'
+      - '**.proto'
+      - '**/go.mod'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Setup Go
+        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Setup buf dependencies
+        run: |
+          go install github.com/bufbuild/buf/cmd/buf@v1.56.0
+          go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.27.1
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
+          go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.27.1
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.7
+
+      - name: Cache go modules
+        uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: ${{ runner.os }}-go-
+
+      - name: Make buf
+        run: |
+          make buf
+
+      - name: Check if Go code has changed
+        run: |
+          if git diff; then
+            echo "Generated Go code has not changed."
+          else
+            echo "Generated Go code has changed. Please make sure to commit the changes."
+            exit 1
+          fi
+
+      - name: Run go tests
+        run: |
+          go test ./...        -run=^Test_U_ -coverprofile=root.cov
+          go test ./deploy/... -run=^Test_U_ -coverprofile=deploy.cov
+          go test ./sdk/...    -run=^Test_U_ -coverprofile=sdk.cov
+
+          go install go.shabbyrobe.org/gocovmerge/cmd/gocovmerge@fa4f82cfbf4d57c646c1ed0f35002bf1b89fbf7a
+          gocovmerge root.cov deploy.cov sdk.cov > unit.cov
+          
+      - name: Upload unit tests coverage
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: unit.cov
+          path: unit.cov
+
+  e2e-tests:
+    uses: ./.github/workflows/e2e.yaml
+
+  coverages:
+    name: Merge Coverage and Upload to Coveralls
+    runs-on: ubuntu-latest
+    needs: [unit-tests, e2e-tests]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Setup Go
+        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        with:
+          go-version-file: "go.work"
+
+      - name: Download unit coverage
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v4.3.2
+        with:
+          name: unit.cov
+
+      - name: Download e2e coverage
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v4.3.2
+        with:
+          name: e2e.cov
+
+      - name: Merge coverage files
+        run: |
+          go install go.shabbyrobe.org/gocovmerge/cmd/gocovmerge@fa4f82cfbf4d57c646c1ed0f35002bf1b89fbf7a
+          gocovmerge unit.cov e2e.cov > overall.cov
+
+      - name: Upload coverage to Coveralls
+        uses: shogo82148/actions-goveralls@25f5320d970fb565100cf1993ada29be1bb196a1 # v1.10.0
+        with:
+          path-to-profile: overall.cov
+          ignore: api/v1/*/*.pb.go,api/v1/*/*.pb.gw.go
+
+  go-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        with:
+          go-version-file: 'go.mod'
+      
+      - name: go-lint
+        uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0
+
+  buf-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: bufbuild/buf-action@8f4a1456a0ab6a1eb80ba68e53832e6fcfacc16c # v1.3.0
+        with:
+          push: false
+          lint: true

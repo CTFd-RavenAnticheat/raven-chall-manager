@@ -1,0 +1,14 @@
+# swagger
+swagger-ui/*
+
+# local chall-manager instance
+Pulumi.*.yaml
+
+# generated content from examples
+examples/**/main
+
+# coverage generated files
+*.cov
+./chall-manager-cli
+kind/.env
+kind/kind.yaml

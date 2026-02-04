@@ -1,0 +1,39 @@
+version: 2
+updates:
+  # Github actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  
+  # Chall-Manager module
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    assignees:
+      - "pandatix"
+
+  # IaC Go module
+  - package-ecosystem: "gomod"
+    directory: "/deploy"
+    schedule:
+      interval: "weekly"
+    assignees:
+      - "pandatix"
+
+  # SDK Go module
+  - package-ecosystem: "gomod"
+    directory: "/sdk"
+    schedule:
+      interval: "weekly"
+    assignees:
+      - "pandatix"
+
+  # Root Dockerfiles
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    assignees:
+      - "pandatix"

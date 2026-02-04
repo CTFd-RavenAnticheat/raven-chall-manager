@@ -1,0 +1,192 @@
+package challenge
+
+import (
+	context "context"
+	"sync"
+
+	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/multierr"
+	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/emptypb"
+
+	"github.com/ctfer-io/chall-manager/api/v1/common"
+	"github.com/ctfer-io/chall-manager/global"
+	errs "github.com/ctfer-io/chall-manager/pkg/errors"
+	"github.com/ctfer-io/chall-manager/pkg/fs"
+	"github.com/ctfer-io/chall-manager/pkg/iac"
+	"github.com/ctfer-io/chall-manager/pkg/lock"
+)
+
+func (store *Store) DeleteChallenge(ctx context.Context, req *DeleteChallengeRequest) (*emptypb.Empty, error) {
+	logger := global.Log()
+	ctx = global.WithChallengeID(ctx, req.Id)
+	span := trace.SpanFromContext(ctx)
+
+	// 1. Lock R TOTW
+	span.AddEvent("lock TOTW")
+	totw, err := common.LockTOTW(ctx)
+	if err != nil {
+		if totw.IsCanceled(err) {
+			return nil, nil
+		}
+		err := &errs.ErrInternal{Sub: err}
+		logger.Error(ctx, "build TOTW lock", zap.Error(err))
+		return nil, errs.ErrInternalNoSub
+	}
+	if err := totw.RLock(ctx); err != nil {
+		if totw.IsCanceled(err) {
+			return nil, nil
+		}
+		err := &errs.ErrInternal{Sub: err}
+		logger.Error(ctx, "TOTW R lock", zap.Error(err))
+		return nil, errs.ErrInternalNoSub
+	}
+	span.AddEvent("locked TOTW")
+
+	// 2. Lock RW challenge
+	clock, err := common.LockChallenge(ctx, req.Id)
+	if err != nil {
+		if clock.IsCanceled(err) {
+			// If canceled, we need to recover
+			if err := totw.RUnlock(context.WithoutCancel(ctx)); err != nil {
+				err := &errs.ErrInternal{Sub: err}
+				logger.Error(ctx, "recovering from build challenge lock", zap.Error(err))
+				return nil, errs.ErrInternalNoSub
+			}
+			return nil, nil // recovery is successful, we can quit safely
+		}
+		err := &errs.ErrInternal{Sub: err}
+		logger.Error(ctx, "build challenge lock", zap.Error(multierr.Combine(
+			totw.RUnlock(context.WithoutCancel(ctx)),
+			err,
+		)))
+		return nil, errs.ErrInternalNoSub
+	}
+	if err := clock.RWLock(ctx); err != nil {
+		if clock.IsCanceled(err) {
+			// If canceled, we need to recover
+			if err := totw.RUnlock(context.WithoutCancel(ctx)); err != nil {
+				err := &errs.ErrInternal{Sub: err}
+				logger.Error(ctx, "recovering from challenge RW lock", zap.Error(err))
+				return nil, errs.ErrScenarioNoSub
+			}
+			return nil, nil // recovery is successful, we can quit safely
+		}
+		err := &errs.ErrInternal{Sub: err}
+		logger.Error(ctx, "challenge RW lock", zap.Error(multierr.Combine(
+			totw.RUnlock(context.WithoutCancel(ctx)),
+			err,
+		)))
+		return nil, errs.ErrInternalNoSub
+	}
+	defer func(lock lock.RWLock) {
+		if err := lock.RWUnlock(context.WithoutCancel(ctx)); err != nil {
+			err := &errs.ErrInternal{Sub: err}
+			logger.Error(ctx, "challenge RW unlock", zap.Error(err))
+		}
+	}(clock)
+	// don't defer unlock, will do it manually for ASAP challenge availability
+
+	// 3. Unlock R TOTW
+	if err := totw.RUnlock(context.WithoutCancel(ctx)); err != nil {
+		err := &errs.ErrInternal{Sub: err}
+		logger.Error(ctx, "TOTW R unlock", zap.Error(err))
+		return nil, errs.ErrInternalNoSub
+	}
+	span.AddEvent("unlocked TOTW")
+
+	// 4. If challenge does not exist, return error (+ unlock RW challenge)
+	fschall, err := fs.LoadChallenge(req.Id)
+	if err != nil {
+		if err, ok := err.(*errs.ErrInternal); ok {
+			logger.Error(ctx, "reading challenge from filesystem", zap.Error(err))
+			return nil, errs.ErrInternalNoSub
+		}
+		return nil, err
+	}
+
+	// 5. Create "relock" and "work" wait groups for all instances, and for each
+	ists, err := fs.ListInstances(req.Id)
+	if err != nil {
+		err := &errs.ErrInternal{Sub: err}
+		logger.Error(ctx, "listing instances", zap.Error(err))
+		return nil, errs.ErrInternalNoSub
+	}
+
+	logger.Info(ctx, "deleting challenge",
+		zap.Int("instances", len(ists)),
+	)
+	work := &sync.WaitGroup{} // track goroutines that ended dealing with the instances
+	work.Add(len(ists))
+	cerr := make(chan error, len(ists))
+	for _, identity := range ists {
+		go func(work *sync.WaitGroup, cerr chan<- error, identity string) {
+			// 6.b. done in the "work" wait group
+			defer work.Done()
+
+			// 6.a. delete it
+			fsist, err := fs.LoadInstance(req.Id, identity)
+			if err != nil {
+				cerr <- err
+				return
+			}
+
+			stack, err := iac.LoadStack(ctx, fschall.Scenario, identity)
+			if err != nil {
+				cerr <- err
+				return
+			}
+			if err := stack.Down(ctx); err != nil {
+				cerr <- err
+				return
+			}
+
+			sourceID, _ := fs.LookupClaim(fsist.ChallengeID, fsist.Identity)
+			common.InstancesUDCounter().Add(ctx, -1,
+				metric.WithAttributeSet(common.InstanceAttrs(req.Id, sourceID, sourceID != "")),
+			)
+		}(work, cerr, identity)
+	}
+
+	// 7. Once all "work" done, return response or error if any
+	work.Wait()
+	close(cerr)
+	var merri, merr error
+	for err := range cerr {
+		if err, ok := err.(*errs.ErrInternal); ok {
+			merri = multierr.Append(merri, err)
+			continue
+		}
+		merr = multierr.Append(merr, err)
+	}
+	if merri != nil {
+		logger.Error(ctx, "reading instances",
+			zap.Error(merri),
+		)
+		if err := fschall.Delete(); err != nil {
+			logger.Error(ctx, "removing challenge directory",
+				zap.Error(err),
+			)
+			return nil, errs.ErrInternalNoSub
+		}
+		return nil, errs.ErrInternalNoSub
+	}
+	if err := fschall.Delete(); err != nil {
+		logger.Error(ctx, "removing challenge directory",
+			zap.Error(multierr.Combine(
+				merr, // keep instance processing error(s)
+				err,
+			)),
+		)
+		return nil, errs.ErrInternalNoSub
+	}
+	if merr != nil {
+		return nil, merr
+	}
+
+	logger.Info(ctx, "challenge deleted successfully")
+	common.ChallengesUDCounter().Add(ctx, -1)
+
+	return nil, nil
+}

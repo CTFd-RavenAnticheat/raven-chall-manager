@@ -1,0 +1,4 @@
+name: additional
+runtime:
+  name: go
+description: Example that exports the additional configuration in the connection info.
