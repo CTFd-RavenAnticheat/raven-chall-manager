@@ -1,8 +1,8 @@
 package main
 
 import (
+	"github.com/CTFd-RavenAnticheat/raven-chall-manager/sdk"
 	k8s "github.com/CTFd-RavenAnticheat/raven-chall-manager/sdk/kubernetes"
-	"github.com/ctfd-ravenanticheat/raven-chall-manager/sdk"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
@@ -18,7 +18,7 @@ func main() {
 			sdk.WithSpecial(true),
 		))
 
-		cm, err := k8s.NewExposedMonopod(req.Ctx, "test", &k8s.ExposedMonopodArgs{
+		cm, err := k8s.NewExposedMonopod(req.Ctx, "evenbtrfs", &k8s.ExposedMonopodArgs{
 			ChallengeID:      pulumi.String(req.Config.ChallengeID),
 			PacketCapturePVC: pulumi.StringPtr("pcap-core"),
 			Identity:         pulumi.String(req.Config.Identity),

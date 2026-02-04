@@ -18,7 +18,7 @@ func main() {
 			sdk.WithSpecial(true),
 		))
 
-		cm, err := k8s.NewExposedMonopod(req.Ctx, "test", &k8s.ExposedMonopodArgs{
+		cm, err := k8s.NewExposedMonopod(req.Ctx, "overclock", &k8s.ExposedMonopodArgs{
 			ChallengeID:      pulumi.String(req.Config.ChallengeID),
 			PacketCapturePVC: pulumi.StringPtr("pcap-core"),
 			Identity:         pulumi.String(req.Config.Identity),

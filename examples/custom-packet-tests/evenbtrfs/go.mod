@@ -3,7 +3,7 @@ module github.com/CTFd-RavenAnticheat/raven-chall-manager/examples/custom-packet
 go 1.25.4
 
 require (
-	github.com/CTFd-RavenAnticheat/raven-chall-manager/sdk v0.1.0
+	github.com/CTFd-RavenAnticheat/raven-chall-manager/sdk v0.2.0
 	github.com/pulumi/pulumi/sdk/v3 v3.216.0
 )
 
@@ -26,6 +26,7 @@ require (
 	github.com/compose-spec/compose-go/v2 v2.10.0 // indirect
 	github.com/containerd/console v1.0.4 // indirect
 	github.com/containerd/log v0.1.0 // indirect
+	github.com/ctfer-io/chall-manager/sdk v0.6.1 // indirect
 	github.com/cyphar/filepath-securejoin v0.3.6 // indirect
 	github.com/deckarep/golang-set v1.8.0 // indirect
 	github.com/distribution/reference v0.6.0 // indirect

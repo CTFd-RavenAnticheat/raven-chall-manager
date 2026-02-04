@@ -457,7 +457,7 @@ func main() {
 							},
 							&cli.StringFlag{
 								Name:     "source_id",
-								Required: true,
+								Required: false,
 							},
 						},
 						Action: func(ctx context.Context, cmd *cli.Command) error {
