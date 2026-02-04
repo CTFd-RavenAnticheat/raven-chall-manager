@@ -1,9 +1,7 @@
-module github.com/ctfer-io/chall-manager/examples/packet-capture
-
 go 1.25.4
 
 require (
-	github.com/ctfer-io/chall-manager/sdk v0.0.0
+	github.com/CTFd-RavenAnticheat/raven-chall-manager/sdk v0.0.0
 	github.com/pulumi/pulumi/sdk/v3 v3.216.0
 )
 
@@ -139,5 +137,3 @@ require (
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v6 v6.3.0 // indirect
 )
-
-replace github.com/ctfer-io/chall-manager/sdk => ../sdk

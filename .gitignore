@@ -12,4 +12,4 @@ examples/**/main
 chall-manager-cli
 kind/.env
 kind/kind.yaml
-examples/custom-packet-tests
+examples/custom-packet-tests/*

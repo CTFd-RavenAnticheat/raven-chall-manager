@@ -1,4 +1,4 @@
-module github.com/ctfer-io/chall-manager/sdk
+module github.com/CTFd-RavenAnticheat/raven-chall-manager/sdk
 
 go 1.25.4
 
