@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/ctfer-io/chall-manager/sdk"
+	"github.com/ctfd-ravenanticheat/raven-chall-manager/sdk"
 	k8s "github.com/ctfer-io/chall-manager/sdk/kubernetes"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
