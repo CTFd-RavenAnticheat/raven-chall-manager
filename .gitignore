@@ -9,6 +9,6 @@ examples/**/main
 
 # coverage generated files
 *.cov
-./chall-manager-cli
+chall-manager-cli
 kind/.env
 kind/kind.yaml
