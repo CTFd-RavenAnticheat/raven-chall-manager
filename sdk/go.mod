@@ -3,13 +3,14 @@ module github.com/CTFd-RavenAnticheat/raven-chall-manager/sdk
 go 1.25.4
 
 require (
+	github.com/ctfer-io/chall-manager/sdk v0.6.1
 	github.com/kubernetes/kompose v1.38.0
 	github.com/pulumi/pulumi-kubernetes/sdk/v4 v4.25.0
 	github.com/pulumi/pulumi/sdk/v3 v3.216.0
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/multierr v1.11.0
-	k8s.io/api v0.35.0
-	k8s.io/apimachinery v0.35.0
+	k8s.io/api v0.35.1
+	k8s.io/apimachinery v0.35.1
 )
 
 require (
@@ -64,7 +65,6 @@ require (
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
-	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
@@ -115,8 +115,9 @@ require (
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
 	github.com/zclconf/go-cty v1.14.0 // indirect
-	go.opentelemetry.io/otel v1.37.0 // indirect
-	go.opentelemetry.io/otel/sdk/metric v1.37.0 // indirect
+	go.opentelemetry.io/otel/metric v1.37.0 // indirect
+	go.opentelemetry.io/otel/sdk v1.37.0 // indirect
+	go.opentelemetry.io/otel/trace v1.37.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v4 v4.0.0-rc.3 // indirect
