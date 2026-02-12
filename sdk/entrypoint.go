@@ -78,9 +78,10 @@ type Response struct {
 // Configuration is the struct that contains the flattened configuration
 // from a chall-manager stack up.
 type Configuration struct {
-	ChallengeID string
-	Identity    string
-	Additional  map[string]string
+	ChallengeID      string
+	Identity         string
+	Additional       map[string]string
+	ImagePullSecrets []string
 }
 
 // Load flatten the Pulumi stack configuration into a ready-to-use struct.
@@ -91,9 +92,17 @@ func Load(ctx *pulumi.Context, project string) *Configuration {
 	if err := cfg.GetObject("additional", &additional); err != nil {
 		panic(err)
 	}
+
+	var imagePullSecrets []string
+	if err := cfg.GetObject("image_pull_secrets", &imagePullSecrets); err != nil {
+		// Image pull secrets are optional, so we ignore errors
+		imagePullSecrets = nil
+	}
+
 	return &Configuration{
-		ChallengeID: cfg.Get("challenge_id"),
-		Identity:    cfg.Get("identity"),
-		Additional:  additional,
+		ChallengeID:      cfg.Get("challenge_id"),
+		Identity:         cfg.Get("identity"),
+		Additional:       additional,
+		ImagePullSecrets: imagePullSecrets,
 	}
 }

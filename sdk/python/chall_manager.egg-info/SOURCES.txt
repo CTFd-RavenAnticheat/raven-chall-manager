@@ -1,0 +1,14 @@
+README.md
+setup.py
+chall_manager/__init__.py
+chall_manager/base.py
+chall_manager/builder.py
+chall_manager/containers.py
+chall_manager/kompose.py
+chall_manager/monopod.py
+chall_manager/multipod.py
+chall_manager.egg-info/PKG-INFO
+chall_manager.egg-info/SOURCES.txt
+chall_manager.egg-info/dependency_links.txt
+chall_manager.egg-info/requires.txt
+chall_manager.egg-info/top_level.txt

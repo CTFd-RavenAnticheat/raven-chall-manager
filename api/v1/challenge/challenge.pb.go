@@ -114,9 +114,13 @@ type CreateChallengeRequest struct {
 	// Max from the pooler feature.
 	// Determine the maximum number of instances that needs to be deployed until we
 	// stop pre-provisioning ones in the pool.
-	Max           int64 `protobuf:"varint,8,opt,name=max,proto3" json:"max,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Max int64 `protobuf:"varint,8,opt,name=max,proto3" json:"max,omitempty"`
+	// Image pull secrets to use when pulling container images for this challenge.
+	// These secrets must exist in the challenge-manager namespace.
+	// Multiple challenges can share the same secret(s).
+	ImagePullSecrets []string `protobuf:"bytes,9,rep,name=image_pull_secrets,json=imagePullSecrets,proto3" json:"image_pull_secrets,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *CreateChallengeRequest) Reset() {
@@ -198,6 +202,13 @@ func (x *CreateChallengeRequest) GetMax() int64 {
 	return 0
 }
 
+func (x *CreateChallengeRequest) GetImagePullSecrets() []string {
+	if x != nil {
+		return x.ImagePullSecrets
+	}
+	return nil
+}
+
 type RetrieveChallengeRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The challenge identifier.
@@ -275,9 +286,12 @@ type UpdateChallengeRequest struct {
 	// Max from the pooler feature.
 	// Determine the maximum number of instances that needs to be deployed until we
 	// stop pre-provisioning ones in the pool.
-	Max           int64 `protobuf:"varint,9,opt,name=max,proto3" json:"max,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Max int64 `protobuf:"varint,9,opt,name=max,proto3" json:"max,omitempty"`
+	// Image pull secrets to use when pulling container images for this challenge.
+	// These secrets must exist in the challenge-manager namespace.
+	ImagePullSecrets []string `protobuf:"bytes,10,rep,name=image_pull_secrets,json=imagePullSecrets,proto3" json:"image_pull_secrets,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *UpdateChallengeRequest) Reset() {
@@ -373,6 +387,13 @@ func (x *UpdateChallengeRequest) GetMax() int64 {
 	return 0
 }
 
+func (x *UpdateChallengeRequest) GetImagePullSecrets() []string {
+	if x != nil {
+		return x.ImagePullSecrets
+	}
+	return nil
+}
+
 type DeleteChallengeRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The challenge identifier.
@@ -445,9 +466,12 @@ type Challenge struct {
 	// Max from the pooler feature.
 	// Determine the maximum number of instances that needs to be deployed until we
 	// stop pre-provisioning ones in the pool.
-	Max           int64 `protobuf:"varint,8,opt,name=max,proto3" json:"max,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Max int64 `protobuf:"varint,8,opt,name=max,proto3" json:"max,omitempty"`
+	// Image pull secrets to use when pulling container images for this challenge.
+	// These secrets must exist in the challenge-manager namespace.
+	ImagePullSecrets []string `protobuf:"bytes,9,rep,name=image_pull_secrets,json=imagePullSecrets,proto3" json:"image_pull_secrets,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *Challenge) Reset() {
@@ -536,11 +560,742 @@ func (x *Challenge) GetMax() int64 {
 	return 0
 }
 
+func (x *Challenge) GetImagePullSecrets() []string {
+	if x != nil {
+		return x.ImagePullSecrets
+	}
+	return nil
+}
+
+// Request to list secrets.
+type ListSecretsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The namespace to list secrets from. Defaults to the challenge namespace.
+	Namespace     string `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListSecretsRequest) Reset() {
+	*x = ListSecretsRequest{}
+	mi := &file_api_v1_challenge_challenge_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListSecretsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListSecretsRequest) ProtoMessage() {}
+
+func (x *ListSecretsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_challenge_challenge_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListSecretsRequest.ProtoReflect.Descriptor instead.
+func (*ListSecretsRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_challenge_challenge_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ListSecretsRequest) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+// Response containing the list of secrets.
+type ListSecretsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The list of secrets.
+	Secrets       []*Secret `protobuf:"bytes,1,rep,name=secrets,proto3" json:"secrets,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListSecretsResponse) Reset() {
+	*x = ListSecretsResponse{}
+	mi := &file_api_v1_challenge_challenge_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListSecretsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListSecretsResponse) ProtoMessage() {}
+
+func (x *ListSecretsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_challenge_challenge_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListSecretsResponse.ProtoReflect.Descriptor instead.
+func (*ListSecretsResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_challenge_challenge_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ListSecretsResponse) GetSecrets() []*Secret {
+	if x != nil {
+		return x.Secrets
+	}
+	return nil
+}
+
+// A Kubernetes secret representation.
+type Secret struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The secret name.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The secret type (e.g., kubernetes.io/dockerconfigjson, Opaque, kubernetes.io/tls).
+	Type string `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
+	// The namespace where the secret is stored.
+	Namespace string `protobuf:"bytes,3,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	// The creation timestamp.
+	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	// The keys stored in the secret.
+	DataKeys []string `protobuf:"bytes,5,rep,name=data_keys,json=dataKeys,proto3" json:"data_keys,omitempty"`
+	// List of challenge IDs that use this secret.
+	UsedByChallenges []string `protobuf:"bytes,6,rep,name=used_by_challenges,json=usedByChallenges,proto3" json:"used_by_challenges,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *Secret) Reset() {
+	*x = Secret{}
+	mi := &file_api_v1_challenge_challenge_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Secret) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Secret) ProtoMessage() {}
+
+func (x *Secret) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_challenge_challenge_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Secret.ProtoReflect.Descriptor instead.
+func (*Secret) Descriptor() ([]byte, []int) {
+	return file_api_v1_challenge_challenge_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *Secret) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Secret) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *Secret) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+func (x *Secret) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *Secret) GetDataKeys() []string {
+	if x != nil {
+		return x.DataKeys
+	}
+	return nil
+}
+
+func (x *Secret) GetUsedByChallenges() []string {
+	if x != nil {
+		return x.UsedByChallenges
+	}
+	return nil
+}
+
+// Request to create a Docker registry secret.
+type CreateDockerRegistrySecretRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The secret name.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The namespace to create the secret in. Defaults to chall-manager.
+	Namespace string `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	// The registry server URL.
+	Server string `protobuf:"bytes,3,opt,name=server,proto3" json:"server,omitempty"`
+	// The registry username.
+	Username string `protobuf:"bytes,4,opt,name=username,proto3" json:"username,omitempty"`
+	// The registry password or token.
+	Password string `protobuf:"bytes,5,opt,name=password,proto3" json:"password,omitempty"`
+	// The email associated with the registry account.
+	Email         string `protobuf:"bytes,6,opt,name=email,proto3" json:"email,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateDockerRegistrySecretRequest) Reset() {
+	*x = CreateDockerRegistrySecretRequest{}
+	mi := &file_api_v1_challenge_challenge_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateDockerRegistrySecretRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateDockerRegistrySecretRequest) ProtoMessage() {}
+
+func (x *CreateDockerRegistrySecretRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_challenge_challenge_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateDockerRegistrySecretRequest.ProtoReflect.Descriptor instead.
+func (*CreateDockerRegistrySecretRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_challenge_challenge_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *CreateDockerRegistrySecretRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CreateDockerRegistrySecretRequest) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+func (x *CreateDockerRegistrySecretRequest) GetServer() string {
+	if x != nil {
+		return x.Server
+	}
+	return ""
+}
+
+func (x *CreateDockerRegistrySecretRequest) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *CreateDockerRegistrySecretRequest) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+func (x *CreateDockerRegistrySecretRequest) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+// Request to create a generic opaque secret.
+type CreateGenericSecretRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The secret name.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The namespace to create the secret in. Defaults to chall-manager.
+	Namespace string `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	// The key-value data to store in the secret.
+	Data          map[string]string `protobuf:"bytes,3,rep,name=data,proto3" json:"data,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateGenericSecretRequest) Reset() {
+	*x = CreateGenericSecretRequest{}
+	mi := &file_api_v1_challenge_challenge_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateGenericSecretRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateGenericSecretRequest) ProtoMessage() {}
+
+func (x *CreateGenericSecretRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_challenge_challenge_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateGenericSecretRequest.ProtoReflect.Descriptor instead.
+func (*CreateGenericSecretRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_challenge_challenge_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *CreateGenericSecretRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CreateGenericSecretRequest) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+func (x *CreateGenericSecretRequest) GetData() map[string]string {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+// Request to create a TLS secret.
+type CreateTLSSecretRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The secret name.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The namespace to create the secret in. Defaults to chall-manager.
+	Namespace string `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	// The TLS certificate in PEM format.
+	Cert string `protobuf:"bytes,3,opt,name=cert,proto3" json:"cert,omitempty"`
+	// The TLS private key in PEM format.
+	Key           string `protobuf:"bytes,4,opt,name=key,proto3" json:"key,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateTLSSecretRequest) Reset() {
+	*x = CreateTLSSecretRequest{}
+	mi := &file_api_v1_challenge_challenge_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateTLSSecretRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateTLSSecretRequest) ProtoMessage() {}
+
+func (x *CreateTLSSecretRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_challenge_challenge_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateTLSSecretRequest.ProtoReflect.Descriptor instead.
+func (*CreateTLSSecretRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_challenge_challenge_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *CreateTLSSecretRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CreateTLSSecretRequest) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+func (x *CreateTLSSecretRequest) GetCert() string {
+	if x != nil {
+		return x.Cert
+	}
+	return ""
+}
+
+func (x *CreateTLSSecretRequest) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+// Request to delete a secret.
+type DeleteSecretRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The secret name.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The namespace where the secret is stored. Defaults to chall-manager.
+	Namespace     string `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteSecretRequest) Reset() {
+	*x = DeleteSecretRequest{}
+	mi := &file_api_v1_challenge_challenge_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteSecretRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteSecretRequest) ProtoMessage() {}
+
+func (x *DeleteSecretRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_challenge_challenge_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteSecretRequest.ProtoReflect.Descriptor instead.
+func (*DeleteSecretRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_challenge_challenge_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *DeleteSecretRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *DeleteSecretRequest) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+// Request to test registry credentials.
+type TestRegistryConnectionRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The registry server URL.
+	Server string `protobuf:"bytes,1,opt,name=server,proto3" json:"server,omitempty"`
+	// The registry username.
+	Username string `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	// The registry password or token.
+	Password      string `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TestRegistryConnectionRequest) Reset() {
+	*x = TestRegistryConnectionRequest{}
+	mi := &file_api_v1_challenge_challenge_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TestRegistryConnectionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TestRegistryConnectionRequest) ProtoMessage() {}
+
+func (x *TestRegistryConnectionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_challenge_challenge_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TestRegistryConnectionRequest.ProtoReflect.Descriptor instead.
+func (*TestRegistryConnectionRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_challenge_challenge_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *TestRegistryConnectionRequest) GetServer() string {
+	if x != nil {
+		return x.Server
+	}
+	return ""
+}
+
+func (x *TestRegistryConnectionRequest) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *TestRegistryConnectionRequest) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+// Response from testing registry credentials.
+type TestRegistryConnectionResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Whether the connection was successful.
+	Success bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	// A message describing the result.
+	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	// Whether authentication was successful.
+	Authenticated bool `protobuf:"varint,3,opt,name=authenticated,proto3" json:"authenticated,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TestRegistryConnectionResponse) Reset() {
+	*x = TestRegistryConnectionResponse{}
+	mi := &file_api_v1_challenge_challenge_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TestRegistryConnectionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TestRegistryConnectionResponse) ProtoMessage() {}
+
+func (x *TestRegistryConnectionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_challenge_challenge_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TestRegistryConnectionResponse.ProtoReflect.Descriptor instead.
+func (*TestRegistryConnectionResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_challenge_challenge_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *TestRegistryConnectionResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *TestRegistryConnectionResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *TestRegistryConnectionResponse) GetAuthenticated() bool {
+	if x != nil {
+		return x.Authenticated
+	}
+	return false
+}
+
+// Request to push a scenario to an OCI registry.
+type PushScenarioRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The scenario files as a ZIP archive.
+	// The ZIP should contain Pulumi.yaml, __main__.py, and requirements.txt
+	ScenarioZip []byte `protobuf:"bytes,1,opt,name=scenario_zip,json=scenarioZip,proto3" json:"scenario_zip,omitempty"`
+	// The OCI reference to push to (e.g., "registry.lan/category/challenge:v1.0.0").
+	// Uses the globally configured OCI registry credentials (OCI_USERNAME, OCI_PASSWORD).
+	Reference     string `protobuf:"bytes,2,opt,name=reference,proto3" json:"reference,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PushScenarioRequest) Reset() {
+	*x = PushScenarioRequest{}
+	mi := &file_api_v1_challenge_challenge_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PushScenarioRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PushScenarioRequest) ProtoMessage() {}
+
+func (x *PushScenarioRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_challenge_challenge_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PushScenarioRequest.ProtoReflect.Descriptor instead.
+func (*PushScenarioRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_challenge_challenge_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *PushScenarioRequest) GetScenarioZip() []byte {
+	if x != nil {
+		return x.ScenarioZip
+	}
+	return nil
+}
+
+func (x *PushScenarioRequest) GetReference() string {
+	if x != nil {
+		return x.Reference
+	}
+	return ""
+}
+
+// Response from pushing a scenario to a registry.
+type PushScenarioResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Whether the push was successful.
+	Success bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	// The scenario reference that was pushed.
+	Reference string `protobuf:"bytes,2,opt,name=reference,proto3" json:"reference,omitempty"`
+	// The digest of the pushed scenario.
+	Digest string `protobuf:"bytes,3,opt,name=digest,proto3" json:"digest,omitempty"`
+	// A message describing the result.
+	Message       string `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PushScenarioResponse) Reset() {
+	*x = PushScenarioResponse{}
+	mi := &file_api_v1_challenge_challenge_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PushScenarioResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PushScenarioResponse) ProtoMessage() {}
+
+func (x *PushScenarioResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_challenge_challenge_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PushScenarioResponse.ProtoReflect.Descriptor instead.
+func (*PushScenarioResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_challenge_challenge_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *PushScenarioResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *PushScenarioResponse) GetReference() string {
+	if x != nil {
+		return x.Reference
+	}
+	return ""
+}
+
+func (x *PushScenarioResponse) GetDigest() string {
+	if x != nil {
+		return x.Digest
+	}
+	return ""
+}
+
+func (x *PushScenarioResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 var File_api_v1_challenge_challenge_proto protoreflect.FileDescriptor
 
 const file_api_v1_challenge_challenge_proto_rawDesc = "" +
 	"\n" +
-	" api/v1/challenge/challenge.proto\x12\x10api.v1.challenge\x1a\x1eapi/v1/instance/instance.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xed\x03\n" +
+	" api/v1/challenge/challenge.proto\x12\x10api.v1.challenge\x1a\x1eapi/v1/instance/instance.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xb6\x04\n" +
 	"\x16CreateChallengeRequest\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\tB\n" +
 	"\x92A\x03J\x011\xe2A\x01\x02R\x02id\x12i\n" +
@@ -553,13 +1308,14 @@ const file_api_v1_challenge_challenge_proto_rawDesc = "" +
 	"\x03min\x18\a \x01(\x03B\n" +
 	"\x92A\x03J\x011\xe2A\x01\x01R\x03min\x12\x1c\n" +
 	"\x03max\x18\b \x01(\x03B\n" +
-	"\x92A\x03J\x011\xe2A\x01\x01R\x03max\x1a=\n" +
+	"\x92A\x03J\x011\xe2A\x01\x01R\x03max\x12G\n" +
+	"\x12image_pull_secrets\x18\t \x03(\tB\x19\x92A\x12J\x10\"gitlab-group-1\"\xe2A\x01\x01R\x10imagePullSecrets\x1a=\n" +
 	"\x0fAdditionalEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"6\n" +
 	"\x18RetrieveChallengeRequest\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\tB\n" +
-	"\x92A\x03J\x011\xe2A\x01\x02R\x02id\"\xa0\x05\n" +
+	"\x92A\x03J\x011\xe2A\x01\x02R\x02id\"\xe9\x05\n" +
 	"\x16UpdateChallengeRequest\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\tB\n" +
 	"\x92A\x03J\x011\xe2A\x01\x02R\x02id\x12n\n" +
@@ -575,7 +1331,9 @@ const file_api_v1_challenge_challenge_proto_rawDesc = "" +
 	"\x03min\x18\b \x01(\x03B\n" +
 	"\x92A\x03J\x011\xe2A\x01\x01R\x03min\x12\x1c\n" +
 	"\x03max\x18\t \x01(\x03B\n" +
-	"\x92A\x03J\x011\xe2A\x01\x01R\x03max\x1a=\n" +
+	"\x92A\x03J\x011\xe2A\x01\x01R\x03max\x12G\n" +
+	"\x12image_pull_secrets\x18\n" +
+	" \x03(\tB\x19\x92A\x12J\x10\"gitlab-group-1\"\xe2A\x01\x01R\x10imagePullSecrets\x1a=\n" +
 	"\x0fAdditionalEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\v\n" +
@@ -583,7 +1341,7 @@ const file_api_v1_challenge_challenge_proto_rawDesc = "" +
 	"\x10_update_strategy\"4\n" +
 	"\x16DeleteChallengeRequest\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\tB\n" +
-	"\x92A\x03J\x011\xe2A\x01\x02R\x02id\"\x92\x04\n" +
+	"\x92A\x03J\x011\xe2A\x01\x02R\x02id\"\xdb\x04\n" +
 	"\tChallenge\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\tB\n" +
 	"\x92A\x03J\x011\xe2A\x01\x02R\x02id\x12i\n" +
@@ -597,10 +1355,61 @@ const file_api_v1_challenge_challenge_proto_rawDesc = "" +
 	"\x03min\x18\a \x01(\x03B\n" +
 	"\x92A\x03J\x011\xe2A\x01\x01R\x03min\x12\x1c\n" +
 	"\x03max\x18\b \x01(\x03B\n" +
-	"\x92A\x03J\x011\xe2A\x01\x01R\x03max\x1a=\n" +
+	"\x92A\x03J\x011\xe2A\x01\x01R\x03max\x12G\n" +
+	"\x12image_pull_secrets\x18\t \x03(\tB\x19\x92A\x12J\x10\"gitlab-group-1\"\xe2A\x01\x01R\x10imagePullSecrets\x1a=\n" +
 	"\x0fAdditionalEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01*C\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"L\n" +
+	"\x12ListSecretsRequest\x126\n" +
+	"\tnamespace\x18\x01 \x01(\tB\x18\x92A\x11J\x0f\"chall-manager\"\xe2A\x01\x01R\tnamespace\"I\n" +
+	"\x13ListSecretsResponse\x122\n" +
+	"\asecrets\x18\x01 \x03(\v2\x18.api.v1.challenge.SecretR\asecrets\"\xc7\x02\n" +
+	"\x06Secret\x12.\n" +
+	"\x04name\x18\x01 \x01(\tB\x1a\x92A\x13J\x11\"gitlab-registry\"\xe2A\x01\x02R\x04name\x12=\n" +
+	"\x04type\x18\x02 \x01(\tB)\x92A\"J \"kubernetes.io/dockerconfigjson\"\xe2A\x01\x02R\x04type\x126\n" +
+	"\tnamespace\x18\x03 \x01(\tB\x18\x92A\x11J\x0f\"chall-manager\"\xe2A\x01\x02R\tnamespace\x12?\n" +
+	"\n" +
+	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x04\xe2A\x01\x03R\tcreatedAt\x12!\n" +
+	"\tdata_keys\x18\x05 \x03(\tB\x04\xe2A\x01\x03R\bdataKeys\x122\n" +
+	"\x12used_by_challenges\x18\x06 \x03(\tB\x04\xe2A\x01\x03R\x10usedByChallenges\"\xdc\x02\n" +
+	"!CreateDockerRegistrySecretRequest\x12.\n" +
+	"\x04name\x18\x01 \x01(\tB\x1a\x92A\x13J\x11\"gitlab-registry\"\xe2A\x01\x02R\x04name\x126\n" +
+	"\tnamespace\x18\x02 \x01(\tB\x18\x92A\x11J\x0f\"chall-manager\"\xe2A\x01\x01R\tnamespace\x126\n" +
+	"\x06server\x18\x03 \x01(\tB\x1e\x92A\x17J\x15\"registry.gitlab.com\"\xe2A\x01\x02R\x06server\x122\n" +
+	"\busername\x18\x04 \x01(\tB\x16\x92A\x0fJ\r\"my-username\"\xe2A\x01\x02R\busername\x120\n" +
+	"\bpassword\x18\x05 \x01(\tB\x14\x92A\rJ\v\"glpat-xxx\"\xe2A\x01\x02R\bpassword\x121\n" +
+	"\x05email\x18\x06 \x01(\tB\x1b\x92A\x14J\x12\"user@example.com\"\xe2A\x01\x01R\x05email\"\x8f\x02\n" +
+	"\x1aCreateGenericSecretRequest\x12.\n" +
+	"\x04name\x18\x01 \x01(\tB\x1a\x92A\x13J\x11\"challenge-flags\"\xe2A\x01\x02R\x04name\x126\n" +
+	"\tnamespace\x18\x02 \x01(\tB\x18\x92A\x11J\x0f\"chall-manager\"\xe2A\x01\x01R\tnamespace\x12P\n" +
+	"\x04data\x18\x03 \x03(\v26.api.v1.challenge.CreateGenericSecretRequest.DataEntryB\x04\xe2A\x01\x02R\x04data\x1a7\n" +
+	"\tDataEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xb4\x02\n" +
+	"\x16CreateTLSSecretRequest\x12,\n" +
+	"\x04name\x18\x01 \x01(\tB\x18\x92A\x11J\x0f\"challenge-tls\"\xe2A\x01\x02R\x04name\x126\n" +
+	"\tnamespace\x18\x02 \x01(\tB\x18\x92A\x11J\x0f\"chall-manager\"\xe2A\x01\x01R\tnamespace\x12Z\n" +
+	"\x04cert\x18\x03 \x01(\tBF\x92A?J=\"-----BEGIN CERTIFICATE-----\\n...\\n-----END CERTIFICATE-----\"\xe2A\x01\x02R\x04cert\x12X\n" +
+	"\x03key\x18\x04 \x01(\tBF\x92A?J=\"-----BEGIN PRIVATE KEY-----\\n...\\n-----END PRIVATE KEY-----\"\xe2A\x01\x02R\x03key\"}\n" +
+	"\x13DeleteSecretRequest\x12.\n" +
+	"\x04name\x18\x01 \x01(\tB\x1a\x92A\x13J\x11\"gitlab-registry\"\xe2A\x01\x02R\x04name\x126\n" +
+	"\tnamespace\x18\x02 \x01(\tB\x18\x92A\x11J\x0f\"chall-manager\"\xe2A\x01\x01R\tnamespace\"\xbd\x01\n" +
+	"\x1dTestRegistryConnectionRequest\x126\n" +
+	"\x06server\x18\x01 \x01(\tB\x1e\x92A\x17J\x15\"registry.gitlab.com\"\xe2A\x01\x02R\x06server\x122\n" +
+	"\busername\x18\x02 \x01(\tB\x16\x92A\x0fJ\r\"my-username\"\xe2A\x01\x02R\busername\x120\n" +
+	"\bpassword\x18\x03 \x01(\tB\x14\x92A\rJ\v\"glpat-xxx\"\xe2A\x01\x02R\bpassword\"z\n" +
+	"\x1eTestRegistryConnectionResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12$\n" +
+	"\rauthenticated\x18\x03 \x01(\bR\rauthenticated\"\x8f\x01\n" +
+	"\x13PushScenarioRequest\x12'\n" +
+	"\fscenario_zip\x18\x01 \x01(\fB\x04\xe2A\x01\x02R\vscenarioZip\x12O\n" +
+	"\treference\x18\x02 \x01(\tB1\x92A*J(\"registry.lan/category/challenge:v1.0.0\"\xe2A\x01\x02R\treference\"\xca\x01\n" +
+	"\x14PushScenarioResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12K\n" +
+	"\treference\x18\x02 \x01(\tB-\x92A*J(\"registry.lan/category/challenge:v1.0.0\"R\treference\x121\n" +
+	"\x06digest\x18\x03 \x01(\tB\x19\x92A\x16J\x14\"sha256:a0b1c2d3...\"R\x06digest\x12\x18\n" +
+	"\amessage\x18\x04 \x01(\tR\amessage*C\n" +
 	"\x0eUpdateStrategy\x12\x13\n" +
 	"\x0fupdate_in_place\x10\x00\x12\x0e\n" +
 	"\n" +
@@ -611,7 +1420,15 @@ const file_api_v1_challenge_challenge_proto_rawDesc = "" +
 	"\x11RetrieveChallenge\x12*.api.v1.challenge.RetrieveChallengeRequest\x1a\x1b.api.v1.challenge.Challenge\"\x1e\x82\xd3\xe4\x93\x02\x18\x12\x16/api/v1/challenge/{id}\x12b\n" +
 	"\x0eQueryChallenge\x12\x16.google.protobuf.Empty\x1a\x1b.api.v1.challenge.Challenge\"\x19\x82\xd3\xe4\x93\x02\x13\x12\x11/api/v1/challenge0\x01\x12{\n" +
 	"\x0fUpdateChallenge\x12(.api.v1.challenge.UpdateChallengeRequest\x1a\x1b.api.v1.challenge.Challenge\"!\x82\xd3\xe4\x93\x02\x1b:\x01*2\x16/api/v1/challenge/{id}\x12s\n" +
-	"\x0fDeleteChallenge\x12(.api.v1.challenge.DeleteChallengeRequest\x1a\x16.google.protobuf.Empty\"\x1e\x82\xd3\xe4\x93\x02\x18*\x16/api/v1/challenge/{id}B>Z<github.com/ctfer-io/chall-manager/api/v1/challenge;challengeb\x06proto3"
+	"\x0fDeleteChallenge\x12(.api.v1.challenge.DeleteChallengeRequest\x1a\x16.google.protobuf.Empty\"\x1e\x82\xd3\xe4\x93\x02\x18*\x16/api/v1/challenge/{id}2\xb3\a\n" +
+	"\rSecretManager\x12s\n" +
+	"\vListSecrets\x12$.api.v1.challenge.ListSecretsRequest\x1a%.api.v1.challenge.ListSecretsResponse\"\x17\x82\xd3\xe4\x93\x02\x11\x12\x0f/api/v1/secrets\x12\x97\x01\n" +
+	"\x1aCreateDockerRegistrySecret\x123.api.v1.challenge.CreateDockerRegistrySecretRequest\x1a\x18.api.v1.challenge.Secret\"*\x82\xd3\xe4\x93\x02$:\x01*\"\x1f/api/v1/secrets/docker-registry\x12\x81\x01\n" +
+	"\x13CreateGenericSecret\x12,.api.v1.challenge.CreateGenericSecretRequest\x1a\x18.api.v1.challenge.Secret\"\"\x82\xd3\xe4\x93\x02\x1c:\x01*\"\x17/api/v1/secrets/generic\x12u\n" +
+	"\x0fCreateTLSSecret\x12(.api.v1.challenge.CreateTLSSecretRequest\x1a\x18.api.v1.challenge.Secret\"\x1e\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/api/v1/secrets/tls\x12m\n" +
+	"\fDeleteSecret\x12%.api.v1.challenge.DeleteSecretRequest\x1a\x16.google.protobuf.Empty\"\x1e\x82\xd3\xe4\x93\x02\x18*\x16/api/v1/secrets/{name}\x12\xa5\x01\n" +
+	"\x16TestRegistryConnection\x12/.api.v1.challenge.TestRegistryConnectionRequest\x1a0.api.v1.challenge.TestRegistryConnectionResponse\"(\x82\xd3\xe4\x93\x02\":\x01*\"\x1d/api/v1/secrets/test-registry\x12\x80\x01\n" +
+	"\fPushScenario\x12%.api.v1.challenge.PushScenarioRequest\x1a&.api.v1.challenge.PushScenarioResponse\"!\x82\xd3\xe4\x93\x02\x1b:\x01*\"\x16/api/v1/scenarios/pushB>Z<github.com/ctfer-io/chall-manager/api/v1/challenge;challengeb\x06proto3"
 
 var (
 	file_api_v1_challenge_challenge_proto_rawDescOnce sync.Once
@@ -626,51 +1443,80 @@ func file_api_v1_challenge_challenge_proto_rawDescGZIP() []byte {
 }
 
 var file_api_v1_challenge_challenge_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_api_v1_challenge_challenge_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_api_v1_challenge_challenge_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_api_v1_challenge_challenge_proto_goTypes = []any{
-	(UpdateStrategy)(0),              // 0: api.v1.challenge.UpdateStrategy
-	(*CreateChallengeRequest)(nil),   // 1: api.v1.challenge.CreateChallengeRequest
-	(*RetrieveChallengeRequest)(nil), // 2: api.v1.challenge.RetrieveChallengeRequest
-	(*UpdateChallengeRequest)(nil),   // 3: api.v1.challenge.UpdateChallengeRequest
-	(*DeleteChallengeRequest)(nil),   // 4: api.v1.challenge.DeleteChallengeRequest
-	(*Challenge)(nil),                // 5: api.v1.challenge.Challenge
-	nil,                              // 6: api.v1.challenge.CreateChallengeRequest.AdditionalEntry
-	nil,                              // 7: api.v1.challenge.UpdateChallengeRequest.AdditionalEntry
-	nil,                              // 8: api.v1.challenge.Challenge.AdditionalEntry
-	(*durationpb.Duration)(nil),      // 9: google.protobuf.Duration
-	(*timestamppb.Timestamp)(nil),    // 10: google.protobuf.Timestamp
-	(*fieldmaskpb.FieldMask)(nil),    // 11: google.protobuf.FieldMask
-	(*instance.Instance)(nil),        // 12: api.v1.instance.Instance
-	(*emptypb.Empty)(nil),            // 13: google.protobuf.Empty
+	(UpdateStrategy)(0),                       // 0: api.v1.challenge.UpdateStrategy
+	(*CreateChallengeRequest)(nil),            // 1: api.v1.challenge.CreateChallengeRequest
+	(*RetrieveChallengeRequest)(nil),          // 2: api.v1.challenge.RetrieveChallengeRequest
+	(*UpdateChallengeRequest)(nil),            // 3: api.v1.challenge.UpdateChallengeRequest
+	(*DeleteChallengeRequest)(nil),            // 4: api.v1.challenge.DeleteChallengeRequest
+	(*Challenge)(nil),                         // 5: api.v1.challenge.Challenge
+	(*ListSecretsRequest)(nil),                // 6: api.v1.challenge.ListSecretsRequest
+	(*ListSecretsResponse)(nil),               // 7: api.v1.challenge.ListSecretsResponse
+	(*Secret)(nil),                            // 8: api.v1.challenge.Secret
+	(*CreateDockerRegistrySecretRequest)(nil), // 9: api.v1.challenge.CreateDockerRegistrySecretRequest
+	(*CreateGenericSecretRequest)(nil),        // 10: api.v1.challenge.CreateGenericSecretRequest
+	(*CreateTLSSecretRequest)(nil),            // 11: api.v1.challenge.CreateTLSSecretRequest
+	(*DeleteSecretRequest)(nil),               // 12: api.v1.challenge.DeleteSecretRequest
+	(*TestRegistryConnectionRequest)(nil),     // 13: api.v1.challenge.TestRegistryConnectionRequest
+	(*TestRegistryConnectionResponse)(nil),    // 14: api.v1.challenge.TestRegistryConnectionResponse
+	(*PushScenarioRequest)(nil),               // 15: api.v1.challenge.PushScenarioRequest
+	(*PushScenarioResponse)(nil),              // 16: api.v1.challenge.PushScenarioResponse
+	nil,                                       // 17: api.v1.challenge.CreateChallengeRequest.AdditionalEntry
+	nil,                                       // 18: api.v1.challenge.UpdateChallengeRequest.AdditionalEntry
+	nil,                                       // 19: api.v1.challenge.Challenge.AdditionalEntry
+	nil,                                       // 20: api.v1.challenge.CreateGenericSecretRequest.DataEntry
+	(*durationpb.Duration)(nil),               // 21: google.protobuf.Duration
+	(*timestamppb.Timestamp)(nil),             // 22: google.protobuf.Timestamp
+	(*fieldmaskpb.FieldMask)(nil),             // 23: google.protobuf.FieldMask
+	(*instance.Instance)(nil),                 // 24: api.v1.instance.Instance
+	(*emptypb.Empty)(nil),                     // 25: google.protobuf.Empty
 }
 var file_api_v1_challenge_challenge_proto_depIdxs = []int32{
-	9,  // 0: api.v1.challenge.CreateChallengeRequest.timeout:type_name -> google.protobuf.Duration
-	10, // 1: api.v1.challenge.CreateChallengeRequest.until:type_name -> google.protobuf.Timestamp
-	6,  // 2: api.v1.challenge.CreateChallengeRequest.additional:type_name -> api.v1.challenge.CreateChallengeRequest.AdditionalEntry
+	21, // 0: api.v1.challenge.CreateChallengeRequest.timeout:type_name -> google.protobuf.Duration
+	22, // 1: api.v1.challenge.CreateChallengeRequest.until:type_name -> google.protobuf.Timestamp
+	17, // 2: api.v1.challenge.CreateChallengeRequest.additional:type_name -> api.v1.challenge.CreateChallengeRequest.AdditionalEntry
 	0,  // 3: api.v1.challenge.UpdateChallengeRequest.update_strategy:type_name -> api.v1.challenge.UpdateStrategy
-	9,  // 4: api.v1.challenge.UpdateChallengeRequest.timeout:type_name -> google.protobuf.Duration
-	10, // 5: api.v1.challenge.UpdateChallengeRequest.until:type_name -> google.protobuf.Timestamp
-	11, // 6: api.v1.challenge.UpdateChallengeRequest.update_mask:type_name -> google.protobuf.FieldMask
-	7,  // 7: api.v1.challenge.UpdateChallengeRequest.additional:type_name -> api.v1.challenge.UpdateChallengeRequest.AdditionalEntry
-	9,  // 8: api.v1.challenge.Challenge.timeout:type_name -> google.protobuf.Duration
-	10, // 9: api.v1.challenge.Challenge.until:type_name -> google.protobuf.Timestamp
-	12, // 10: api.v1.challenge.Challenge.instances:type_name -> api.v1.instance.Instance
-	8,  // 11: api.v1.challenge.Challenge.additional:type_name -> api.v1.challenge.Challenge.AdditionalEntry
-	1,  // 12: api.v1.challenge.ChallengeStore.CreateChallenge:input_type -> api.v1.challenge.CreateChallengeRequest
-	2,  // 13: api.v1.challenge.ChallengeStore.RetrieveChallenge:input_type -> api.v1.challenge.RetrieveChallengeRequest
-	13, // 14: api.v1.challenge.ChallengeStore.QueryChallenge:input_type -> google.protobuf.Empty
-	3,  // 15: api.v1.challenge.ChallengeStore.UpdateChallenge:input_type -> api.v1.challenge.UpdateChallengeRequest
-	4,  // 16: api.v1.challenge.ChallengeStore.DeleteChallenge:input_type -> api.v1.challenge.DeleteChallengeRequest
-	5,  // 17: api.v1.challenge.ChallengeStore.CreateChallenge:output_type -> api.v1.challenge.Challenge
-	5,  // 18: api.v1.challenge.ChallengeStore.RetrieveChallenge:output_type -> api.v1.challenge.Challenge
-	5,  // 19: api.v1.challenge.ChallengeStore.QueryChallenge:output_type -> api.v1.challenge.Challenge
-	5,  // 20: api.v1.challenge.ChallengeStore.UpdateChallenge:output_type -> api.v1.challenge.Challenge
-	13, // 21: api.v1.challenge.ChallengeStore.DeleteChallenge:output_type -> google.protobuf.Empty
-	17, // [17:22] is the sub-list for method output_type
-	12, // [12:17] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	21, // 4: api.v1.challenge.UpdateChallengeRequest.timeout:type_name -> google.protobuf.Duration
+	22, // 5: api.v1.challenge.UpdateChallengeRequest.until:type_name -> google.protobuf.Timestamp
+	23, // 6: api.v1.challenge.UpdateChallengeRequest.update_mask:type_name -> google.protobuf.FieldMask
+	18, // 7: api.v1.challenge.UpdateChallengeRequest.additional:type_name -> api.v1.challenge.UpdateChallengeRequest.AdditionalEntry
+	21, // 8: api.v1.challenge.Challenge.timeout:type_name -> google.protobuf.Duration
+	22, // 9: api.v1.challenge.Challenge.until:type_name -> google.protobuf.Timestamp
+	24, // 10: api.v1.challenge.Challenge.instances:type_name -> api.v1.instance.Instance
+	19, // 11: api.v1.challenge.Challenge.additional:type_name -> api.v1.challenge.Challenge.AdditionalEntry
+	8,  // 12: api.v1.challenge.ListSecretsResponse.secrets:type_name -> api.v1.challenge.Secret
+	22, // 13: api.v1.challenge.Secret.created_at:type_name -> google.protobuf.Timestamp
+	20, // 14: api.v1.challenge.CreateGenericSecretRequest.data:type_name -> api.v1.challenge.CreateGenericSecretRequest.DataEntry
+	1,  // 15: api.v1.challenge.ChallengeStore.CreateChallenge:input_type -> api.v1.challenge.CreateChallengeRequest
+	2,  // 16: api.v1.challenge.ChallengeStore.RetrieveChallenge:input_type -> api.v1.challenge.RetrieveChallengeRequest
+	25, // 17: api.v1.challenge.ChallengeStore.QueryChallenge:input_type -> google.protobuf.Empty
+	3,  // 18: api.v1.challenge.ChallengeStore.UpdateChallenge:input_type -> api.v1.challenge.UpdateChallengeRequest
+	4,  // 19: api.v1.challenge.ChallengeStore.DeleteChallenge:input_type -> api.v1.challenge.DeleteChallengeRequest
+	6,  // 20: api.v1.challenge.SecretManager.ListSecrets:input_type -> api.v1.challenge.ListSecretsRequest
+	9,  // 21: api.v1.challenge.SecretManager.CreateDockerRegistrySecret:input_type -> api.v1.challenge.CreateDockerRegistrySecretRequest
+	10, // 22: api.v1.challenge.SecretManager.CreateGenericSecret:input_type -> api.v1.challenge.CreateGenericSecretRequest
+	11, // 23: api.v1.challenge.SecretManager.CreateTLSSecret:input_type -> api.v1.challenge.CreateTLSSecretRequest
+	12, // 24: api.v1.challenge.SecretManager.DeleteSecret:input_type -> api.v1.challenge.DeleteSecretRequest
+	13, // 25: api.v1.challenge.SecretManager.TestRegistryConnection:input_type -> api.v1.challenge.TestRegistryConnectionRequest
+	15, // 26: api.v1.challenge.SecretManager.PushScenario:input_type -> api.v1.challenge.PushScenarioRequest
+	5,  // 27: api.v1.challenge.ChallengeStore.CreateChallenge:output_type -> api.v1.challenge.Challenge
+	5,  // 28: api.v1.challenge.ChallengeStore.RetrieveChallenge:output_type -> api.v1.challenge.Challenge
+	5,  // 29: api.v1.challenge.ChallengeStore.QueryChallenge:output_type -> api.v1.challenge.Challenge
+	5,  // 30: api.v1.challenge.ChallengeStore.UpdateChallenge:output_type -> api.v1.challenge.Challenge
+	25, // 31: api.v1.challenge.ChallengeStore.DeleteChallenge:output_type -> google.protobuf.Empty
+	7,  // 32: api.v1.challenge.SecretManager.ListSecrets:output_type -> api.v1.challenge.ListSecretsResponse
+	8,  // 33: api.v1.challenge.SecretManager.CreateDockerRegistrySecret:output_type -> api.v1.challenge.Secret
+	8,  // 34: api.v1.challenge.SecretManager.CreateGenericSecret:output_type -> api.v1.challenge.Secret
+	8,  // 35: api.v1.challenge.SecretManager.CreateTLSSecret:output_type -> api.v1.challenge.Secret
+	25, // 36: api.v1.challenge.SecretManager.DeleteSecret:output_type -> google.protobuf.Empty
+	14, // 37: api.v1.challenge.SecretManager.TestRegistryConnection:output_type -> api.v1.challenge.TestRegistryConnectionResponse
+	16, // 38: api.v1.challenge.SecretManager.PushScenario:output_type -> api.v1.challenge.PushScenarioResponse
+	27, // [27:39] is the sub-list for method output_type
+	15, // [15:27] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_challenge_challenge_proto_init() }
@@ -685,9 +1531,9 @@ func file_api_v1_challenge_challenge_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_challenge_challenge_proto_rawDesc), len(file_api_v1_challenge_challenge_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   8,
+			NumMessages:   20,
 			NumExtensions: 0,
-			NumServices:   1,
+			NumServices:   2,
 		},
 		GoTypes:           file_api_v1_challenge_challenge_proto_goTypes,
 		DependencyIndexes: file_api_v1_challenge_challenge_proto_depIdxs,

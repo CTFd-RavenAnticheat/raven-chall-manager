@@ -165,14 +165,15 @@ func (store *Store) RetrieveChallenge(ctx context.Context, req *RetrieveChalleng
 	}
 
 	return &Challenge{
-		Id:         req.Id,
-		Scenario:   fschall.Scenario,
-		Timeout:    toPBDuration(fschall.Timeout),
-		Until:      toPBTimestamp(fschall.Until),
-		Instances:  oists,
-		Additional: fschall.Additional,
-		Min:        fschall.Min,
-		Max:        fschall.Max,
+		Id:               req.Id,
+		Scenario:         fschall.Scenario,
+		Timeout:          toPBDuration(fschall.Timeout),
+		Until:            toPBTimestamp(fschall.Until),
+		Instances:        oists,
+		Additional:       fschall.Additional,
+		Min:              fschall.Min,
+		Max:              fschall.Max,
+		ImagePullSecrets: fschall.ImagePullSecrets,
 	}, nil
 }
 

@@ -114,13 +114,14 @@ func (store *Store) CreateChallenge(ctx context.Context, req *CreateChallengeReq
 	// 5. Prepare challenge
 	logger.Info(ctx, "creating challenge")
 	fschall := &fs.Challenge{
-		ID:         req.Id,
-		Scenario:   req.Scenario,
-		Timeout:    toDuration(req.Timeout),
-		Until:      toTime(req.Until),
-		Additional: req.Additional,
-		Min:        req.Min,
-		Max:        req.Max,
+		ID:               req.Id,
+		Scenario:         req.Scenario,
+		Timeout:          toDuration(req.Timeout),
+		Until:            toTime(req.Until),
+		Additional:       req.Additional,
+		Min:              req.Min,
+		Max:              req.Max,
+		ImagePullSecrets: req.ImagePullSecrets,
 	}
 
 	if err := iac.Validate(ctx, fschall); err != nil {
@@ -153,14 +154,15 @@ func (store *Store) CreateChallenge(ctx context.Context, req *CreateChallengeReq
 	common.ChallengesUDCounter().Add(ctx, 1)
 
 	chall := &Challenge{
-		Id:         req.Id,
-		Scenario:   req.Scenario,
-		Timeout:    req.Timeout,
-		Until:      req.Until,
-		Instances:  []*instance.Instance{},
-		Additional: req.Additional,
-		Min:        req.Min,
-		Max:        req.Max,
+		Id:               req.Id,
+		Scenario:         req.Scenario,
+		Timeout:          req.Timeout,
+		Until:            req.Until,
+		Instances:        []*instance.Instance{},
+		Additional:       req.Additional,
+		Min:              req.Min,
+		Max:              req.Max,
+		ImagePullSecrets: req.ImagePullSecrets,
 	}
 
 	// 8. Unlock RW challenge

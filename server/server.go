@@ -127,6 +127,7 @@ func (s *Server) newGRPCServer() *grpc.Server {
 	// Register every services
 	challenge.RegisterChallengeStoreServer(grpcServer, challenge.NewStore())
 	instance.RegisterInstanceManagerServer(grpcServer, instance.NewManager())
+	challenge.RegisterSecretManagerServer(grpcServer, challenge.NewSecretManagerService())
 
 	return grpcServer
 }
@@ -159,6 +160,7 @@ func (s *Server) newHTTPServer(ctx context.Context, grpcWebHandler http.Handler)
 	// Register all HTTP->gRPC forwarders
 	must(challenge.RegisterChallengeStoreHandler(ctx, gwmux, s.lns.GWConn))
 	must(instance.RegisterInstanceManagerHandler(ctx, gwmux, s.lns.GWConn))
+	must(challenge.RegisterSecretManagerHandler(ctx, gwmux, s.lns.GWConn))
 
 	return &httpServer
 }

@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chall-Manager Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Navigation */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            transition: background 0.3s ease;
+            opacity: 0.8;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            background: rgba(255,255,255,0.2);
+            opacity: 1;
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .dashboard-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header h2 {
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .refresh-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .card-body {
+            padding: 0;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        /* Table Styles */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+            position: sticky;
+            top: 0;
+        }
+
+        .data-table td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .data-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        /* Action Buttons */
+        .action-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+
+        .action-btn:hover {
+            background: #5a67d8;
+        }
+
+        .action-btn.delete {
+            background: #dc3545;
+        }
+
+        .action-btn.delete:hover {
+            background: #c82333;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .action-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-decoration: none;
+            color: inherit;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .action-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+        }
+
+        .action-card h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .action-card p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .action-icon {
+            font-size: 36px;
+            margin-bottom: 15px;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Error State */
+        .error-state {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px;
+        }
+
+        /* Health Status */
+        .health-bar {
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .health-bar h3 {
+            margin-bottom: 10px;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .health-services {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .health-service {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .health-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .health-dot.connected {
+            background: #28a745;
+        }
+
+        .health-dot.disconnected {
+            background: #dc3545;
+        }
+
+        .truncate {
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <a href="/" class="logo">🚩 Chall-Manager</a>
+            <div class="nav-links">
+                <a href="/" class="active">Dashboard</a>
+                <a href="/scenario-builder">Scenario Builder</a>
+                <a href="/secrets">Secret Manager</a>
+            </div>
+        </nav>
+
+        <!-- Health Status -->
+        <div class="health-bar" id="health-bar">
+            <h3>System Status</h3>
+            <div class="health-services" id="health-services">
+                <div class="health-service">
+                    <div class="health-dot disconnected" id="health-webui"></div>
+                    <span>Web UI</span>
+                </div>
+                <div class="health-service">
+                    <div class="health-dot disconnected" id="health-challmanager"></div>
+                    <span>Chall-Manager</span>
+                </div>
+                <div class="health-service">
+                    <div class="health-dot disconnected" id="health-kubernetes"></div>
+                    <span>Kubernetes</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="/scenario-builder" class="action-card">
+                <div class="action-icon">📦</div>
+                <h3>Create Scenario</h3>
+                <p>Build and deploy new challenge scenarios with Monopod, Multipod, or Docker Compose</p>
+            </a>
+            <a href="/secrets" class="action-card">
+                <div class="action-icon">🔐</div>
+                <h3>Manage Secrets</h3>
+                <p>Create registry credentials and configuration secrets for private repositories</p>
+            </a>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Challenges Card -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>📋 Challenges</h2>
+                    <button class="refresh-btn" onclick="loadChallenges()">🔄 Refresh</button>
+                </div>
+                <div class="card-body" id="challenges-container">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Loading challenges...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instances Card -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>🖥️ Instances</h2>
+                    <button class="refresh-btn" onclick="loadInstances()">🔄 Refresh</button>
+                </div>
+                <div class="card-body" id="instances-container">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Loading instances...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load health status
+        async function loadHealth() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                
+                // Update health indicators
+                if (data.services) {
+                    updateHealthDot('health-webui', 'connected');
+                    updateHealthDot('health-challmanager', data.services.chall_manager === 'connected' ? 'connected' : 'disconnected');
+                    updateHealthDot('health-kubernetes', data.services.kubernetes === 'connected' ? 'connected' : 'disconnected');
+                }
+            } catch (error) {
+                console.error('Health check failed:', error);
+                updateHealthDot('health-webui', 'disconnected');
+            }
+        }
+
+        function updateHealthDot(id, status) {
+            const dot = document.getElementById(id);
+            if (dot) {
+                dot.className = `health-dot ${status}`;
+            }
+        }
+
+        // Load challenges
+        async function loadChallenges() {
+            const container = document.getElementById('challenges-container');
+            container.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading challenges...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch('/api/chall-manager/challenges');
+                const data = await response.json();
+
+                if (response.ok && data.challenges) {
+                    renderChallenges(data.challenges);
+                } else {
+                    container.innerHTML = `
+                        <div class="error-state">
+                            <strong>Error:</strong> ${data.error || 'Failed to load challenges'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="error-state">
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function renderChallenges(challenges) {
+            const container = document.getElementById('challenges-container');
+            
+            if (challenges.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <h3>No Challenges</h3>
+                        <p>Create your first challenge using the Scenario Builder</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Scenario</th>
+                            <th>Instances</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            challenges.forEach(challenge => {
+                const instanceCount = challenge.instances ? challenge.instances.length : 0;
+                html += `
+                    <tr>
+                        <td><strong>${escapeHtml(challenge.id)}</strong></td>
+                        <td class="truncate" title="${escapeHtml(challenge.scenario)}">${escapeHtml(challenge.scenario)}</td>
+                        <td>${instanceCount}</td>
+                        <td>
+                            <button class="action-btn" onclick="viewChallenge('${challenge.id}')">View</button>
+                            <button class="action-btn delete" onclick="deleteChallenge('${challenge.id}')">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // Load instances
+        async function loadInstances() {
+            const container = document.getElementById('instances-container');
+            container.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading instances...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch('/api/chall-manager/instances');
+                const data = await response.json();
+
+                if (response.ok && data.instances) {
+                    renderInstances(data.instances);
+                } else {
+                    container.innerHTML = `
+                        <div class="error-state">
+                            <strong>Error:</strong> ${data.error || 'Failed to load instances'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="error-state">
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function renderInstances(instances) {
+            const container = document.getElementById('instances-container');
+            
+            if (instances.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🖥️</div>
+                        <h3>No Instances</h3>
+                        <p>No challenge instances are currently running</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Challenge</th>
+                            <th>Source ID</th>
+                            <th>Status</th>
+                            <th>Connection Info</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            instances.forEach(instance => {
+                const connInfo = instance.connection_info || 'N/A';
+                html += `
+                    <tr>
+                        <td>${escapeHtml(instance.challenge_id)}</td>
+                        <td>${escapeHtml(instance.source_id)}</td>
+                        <td><span class="status-badge status-active">Active</span></td>
+                        <td class="truncate" title="${escapeHtml(connInfo)}">${escapeHtml(connInfo)}</td>
+                        <td>
+                            <button class="action-btn" onclick="renewInstance('${instance.challenge_id}', '${instance.source_id}')">Renew</button>
+                            <button class="action-btn delete" onclick="deleteInstance('${instance.challenge_id}', '${instance.source_id}')">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // Actions
+        async function viewChallenge(challengeId) {
+            alert(`View challenge details for: ${challengeId}`);
+        }
+
+        async function deleteChallenge(challengeId) {
+            if (!confirm(`Are you sure you want to delete challenge "${challengeId}"?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/chall-manager/challenges/${challengeId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert('Challenge deleted successfully');
+                    loadChallenges();
+                } else {
+                    const data = await response.json();
+                    alert('Error: ' + (data.error || 'Failed to delete challenge'));
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function renewInstance(challengeId, sourceId) {
+            try {
+                const response = await fetch(`/api/chall-manager/instances/${challengeId}/${sourceId}/renew`, {
+                    method: 'PATCH'
+                });
+
+                if (response.ok) {
+                    alert('Instance renewed successfully');
+                    loadInstances();
+                } else {
+                    const data = await response.json();
+                    alert('Error: ' + (data.error || 'Failed to renew instance'));
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function deleteInstance(challengeId, sourceId) {
+            if (!confirm(`Are you sure you want to delete this instance?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/chall-manager/instances/${challengeId}/${sourceId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert('Instance deleted successfully');
+                    loadInstances();
+                } else {
+                    const data = await response.json();
+                    alert('Error: ' + (data.error || 'Failed to delete instance'));
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // Utility
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadHealth();
+            loadChallenges();
+            loadInstances();
+            
+            // Refresh every 30 seconds
+            setInterval(() => {
+                loadHealth();
+                loadChallenges();
+                loadInstances();
+            }, 30000);
+        });
+    </script>
+</body>
+</html>

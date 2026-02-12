@@ -164,14 +164,15 @@ func (store *Store) QueryChallenge(_ *emptypb.Empty, server ChallengeStore_Query
 			}
 
 			if err := qs.SendMsg(&Challenge{
-				Id:         id,
-				Scenario:   fschall.Scenario,
-				Timeout:    toPBDuration(fschall.Timeout),
-				Until:      toPBTimestamp(fschall.Until),
-				Instances:  oists,
-				Additional: fschall.Additional,
-				Min:        fschall.Min,
-				Max:        fschall.Max,
+				Id:               id,
+				Scenario:         fschall.Scenario,
+				Timeout:          toPBDuration(fschall.Timeout),
+				Until:            toPBTimestamp(fschall.Until),
+				Instances:        oists,
+				Additional:       fschall.Additional,
+				Min:              fschall.Min,
+				Max:              fschall.Max,
+				ImagePullSecrets: fschall.ImagePullSecrets,
 			}); err != nil {
 				cerr <- err
 				return

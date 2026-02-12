@@ -320,3 +320,355 @@ var ChallengeStore_ServiceDesc = grpc.ServiceDesc{
 	},
 	Metadata: "api/v1/challenge/challenge.proto",
 }
+
+const (
+	SecretManager_ListSecrets_FullMethodName                = "/api.v1.challenge.SecretManager/ListSecrets"
+	SecretManager_CreateDockerRegistrySecret_FullMethodName = "/api.v1.challenge.SecretManager/CreateDockerRegistrySecret"
+	SecretManager_CreateGenericSecret_FullMethodName        = "/api.v1.challenge.SecretManager/CreateGenericSecret"
+	SecretManager_CreateTLSSecret_FullMethodName            = "/api.v1.challenge.SecretManager/CreateTLSSecret"
+	SecretManager_DeleteSecret_FullMethodName               = "/api.v1.challenge.SecretManager/DeleteSecret"
+	SecretManager_TestRegistryConnection_FullMethodName     = "/api.v1.challenge.SecretManager/TestRegistryConnection"
+	SecretManager_PushScenario_FullMethodName               = "/api.v1.challenge.SecretManager/PushScenario"
+)
+
+// SecretManagerClient is the client API for SecretManager service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// SecretManager handles Kubernetes secrets for private registries and configuration.
+// This service provides CRUD operations for secrets in the challenge namespace.
+type SecretManagerClient interface {
+	// List all secrets in the challenge namespace.
+	ListSecrets(ctx context.Context, in *ListSecretsRequest, opts ...grpc.CallOption) (*ListSecretsResponse, error)
+	// Create a Docker registry secret for pulling images from private registries.
+	CreateDockerRegistrySecret(ctx context.Context, in *CreateDockerRegistrySecretRequest, opts ...grpc.CallOption) (*Secret, error)
+	// Create a generic opaque secret for configuration data.
+	CreateGenericSecret(ctx context.Context, in *CreateGenericSecretRequest, opts ...grpc.CallOption) (*Secret, error)
+	// Create a TLS secret for HTTPS ingress.
+	CreateTLSSecret(ctx context.Context, in *CreateTLSSecretRequest, opts ...grpc.CallOption) (*Secret, error)
+	// Delete a secret from the challenge namespace.
+	DeleteSecret(ctx context.Context, in *DeleteSecretRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Test registry credentials without creating a secret.
+	TestRegistryConnection(ctx context.Context, in *TestRegistryConnectionRequest, opts ...grpc.CallOption) (*TestRegistryConnectionResponse, error)
+	// Push a scenario to an OCI registry.
+	// This endpoint receives a ZIP file containing the scenario and pushes it to the specified registry.
+	PushScenario(ctx context.Context, in *PushScenarioRequest, opts ...grpc.CallOption) (*PushScenarioResponse, error)
+}
+
+type secretManagerClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewSecretManagerClient(cc grpc.ClientConnInterface) SecretManagerClient {
+	return &secretManagerClient{cc}
+}
+
+func (c *secretManagerClient) ListSecrets(ctx context.Context, in *ListSecretsRequest, opts ...grpc.CallOption) (*ListSecretsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListSecretsResponse)
+	err := c.cc.Invoke(ctx, SecretManager_ListSecrets_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *secretManagerClient) CreateDockerRegistrySecret(ctx context.Context, in *CreateDockerRegistrySecretRequest, opts ...grpc.CallOption) (*Secret, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Secret)
+	err := c.cc.Invoke(ctx, SecretManager_CreateDockerRegistrySecret_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *secretManagerClient) CreateGenericSecret(ctx context.Context, in *CreateGenericSecretRequest, opts ...grpc.CallOption) (*Secret, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Secret)
+	err := c.cc.Invoke(ctx, SecretManager_CreateGenericSecret_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *secretManagerClient) CreateTLSSecret(ctx context.Context, in *CreateTLSSecretRequest, opts ...grpc.CallOption) (*Secret, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Secret)
+	err := c.cc.Invoke(ctx, SecretManager_CreateTLSSecret_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *secretManagerClient) DeleteSecret(ctx context.Context, in *DeleteSecretRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, SecretManager_DeleteSecret_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *secretManagerClient) TestRegistryConnection(ctx context.Context, in *TestRegistryConnectionRequest, opts ...grpc.CallOption) (*TestRegistryConnectionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TestRegistryConnectionResponse)
+	err := c.cc.Invoke(ctx, SecretManager_TestRegistryConnection_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *secretManagerClient) PushScenario(ctx context.Context, in *PushScenarioRequest, opts ...grpc.CallOption) (*PushScenarioResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PushScenarioResponse)
+	err := c.cc.Invoke(ctx, SecretManager_PushScenario_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// SecretManagerServer is the server API for SecretManager service.
+// All implementations must embed UnimplementedSecretManagerServer
+// for forward compatibility.
+//
+// SecretManager handles Kubernetes secrets for private registries and configuration.
+// This service provides CRUD operations for secrets in the challenge namespace.
+type SecretManagerServer interface {
+	// List all secrets in the challenge namespace.
+	ListSecrets(context.Context, *ListSecretsRequest) (*ListSecretsResponse, error)
+	// Create a Docker registry secret for pulling images from private registries.
+	CreateDockerRegistrySecret(context.Context, *CreateDockerRegistrySecretRequest) (*Secret, error)
+	// Create a generic opaque secret for configuration data.
+	CreateGenericSecret(context.Context, *CreateGenericSecretRequest) (*Secret, error)
+	// Create a TLS secret for HTTPS ingress.
+	CreateTLSSecret(context.Context, *CreateTLSSecretRequest) (*Secret, error)
+	// Delete a secret from the challenge namespace.
+	DeleteSecret(context.Context, *DeleteSecretRequest) (*emptypb.Empty, error)
+	// Test registry credentials without creating a secret.
+	TestRegistryConnection(context.Context, *TestRegistryConnectionRequest) (*TestRegistryConnectionResponse, error)
+	// Push a scenario to an OCI registry.
+	// This endpoint receives a ZIP file containing the scenario and pushes it to the specified registry.
+	PushScenario(context.Context, *PushScenarioRequest) (*PushScenarioResponse, error)
+	mustEmbedUnimplementedSecretManagerServer()
+}
+
+// UnimplementedSecretManagerServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedSecretManagerServer struct{}
+
+func (UnimplementedSecretManagerServer) ListSecrets(context.Context, *ListSecretsRequest) (*ListSecretsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListSecrets not implemented")
+}
+func (UnimplementedSecretManagerServer) CreateDockerRegistrySecret(context.Context, *CreateDockerRegistrySecretRequest) (*Secret, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateDockerRegistrySecret not implemented")
+}
+func (UnimplementedSecretManagerServer) CreateGenericSecret(context.Context, *CreateGenericSecretRequest) (*Secret, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateGenericSecret not implemented")
+}
+func (UnimplementedSecretManagerServer) CreateTLSSecret(context.Context, *CreateTLSSecretRequest) (*Secret, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateTLSSecret not implemented")
+}
+func (UnimplementedSecretManagerServer) DeleteSecret(context.Context, *DeleteSecretRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteSecret not implemented")
+}
+func (UnimplementedSecretManagerServer) TestRegistryConnection(context.Context, *TestRegistryConnectionRequest) (*TestRegistryConnectionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method TestRegistryConnection not implemented")
+}
+func (UnimplementedSecretManagerServer) PushScenario(context.Context, *PushScenarioRequest) (*PushScenarioResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method PushScenario not implemented")
+}
+func (UnimplementedSecretManagerServer) mustEmbedUnimplementedSecretManagerServer() {}
+func (UnimplementedSecretManagerServer) testEmbeddedByValue()                       {}
+
+// UnsafeSecretManagerServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to SecretManagerServer will
+// result in compilation errors.
+type UnsafeSecretManagerServer interface {
+	mustEmbedUnimplementedSecretManagerServer()
+}
+
+func RegisterSecretManagerServer(s grpc.ServiceRegistrar, srv SecretManagerServer) {
+	// If the following call panics, it indicates UnimplementedSecretManagerServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&SecretManager_ServiceDesc, srv)
+}
+
+func _SecretManager_ListSecrets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListSecretsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SecretManagerServer).ListSecrets(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SecretManager_ListSecrets_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SecretManagerServer).ListSecrets(ctx, req.(*ListSecretsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SecretManager_CreateDockerRegistrySecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateDockerRegistrySecretRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SecretManagerServer).CreateDockerRegistrySecret(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SecretManager_CreateDockerRegistrySecret_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SecretManagerServer).CreateDockerRegistrySecret(ctx, req.(*CreateDockerRegistrySecretRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SecretManager_CreateGenericSecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateGenericSecretRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SecretManagerServer).CreateGenericSecret(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SecretManager_CreateGenericSecret_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SecretManagerServer).CreateGenericSecret(ctx, req.(*CreateGenericSecretRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SecretManager_CreateTLSSecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateTLSSecretRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SecretManagerServer).CreateTLSSecret(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SecretManager_CreateTLSSecret_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SecretManagerServer).CreateTLSSecret(ctx, req.(*CreateTLSSecretRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SecretManager_DeleteSecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteSecretRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SecretManagerServer).DeleteSecret(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SecretManager_DeleteSecret_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SecretManagerServer).DeleteSecret(ctx, req.(*DeleteSecretRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SecretManager_TestRegistryConnection_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TestRegistryConnectionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SecretManagerServer).TestRegistryConnection(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SecretManager_TestRegistryConnection_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SecretManagerServer).TestRegistryConnection(ctx, req.(*TestRegistryConnectionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SecretManager_PushScenario_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PushScenarioRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SecretManagerServer).PushScenario(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SecretManager_PushScenario_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SecretManagerServer).PushScenario(ctx, req.(*PushScenarioRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// SecretManager_ServiceDesc is the grpc.ServiceDesc for SecretManager service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var SecretManager_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "api.v1.challenge.SecretManager",
+	HandlerType: (*SecretManagerServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ListSecrets",
+			Handler:    _SecretManager_ListSecrets_Handler,
+		},
+		{
+			MethodName: "CreateDockerRegistrySecret",
+			Handler:    _SecretManager_CreateDockerRegistrySecret_Handler,
+		},
+		{
+			MethodName: "CreateGenericSecret",
+			Handler:    _SecretManager_CreateGenericSecret_Handler,
+		},
+		{
+			MethodName: "CreateTLSSecret",
+			Handler:    _SecretManager_CreateTLSSecret_Handler,
+		},
+		{
+			MethodName: "DeleteSecret",
+			Handler:    _SecretManager_DeleteSecret_Handler,
+		},
+		{
+			MethodName: "TestRegistryConnection",
+			Handler:    _SecretManager_TestRegistryConnection_Handler,
+		},
+		{
+			MethodName: "PushScenario",
+			Handler:    _SecretManager_PushScenario_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "api/v1/challenge/challenge.proto",
+}

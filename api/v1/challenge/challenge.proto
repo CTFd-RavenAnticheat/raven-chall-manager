@@ -105,6 +105,14 @@ message CreateChallengeRequest {
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "1"},
     (google.api.field_behavior) = OPTIONAL
   ];
+
+  // Image pull secrets to use when pulling container images for this challenge.
+  // These secrets must exist in the challenge-manager namespace.
+  // Multiple challenges can share the same secret(s).
+  repeated string image_pull_secrets = 9 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"gitlab-group-1\""},
+    (google.api.field_behavior) = OPTIONAL
+  ];
 }
 
 message RetrieveChallengeRequest {
@@ -167,6 +175,13 @@ message UpdateChallengeRequest {
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "1"},
     (google.api.field_behavior) = OPTIONAL
   ];
+
+  // Image pull secrets to use when pulling container images for this challenge.
+  // These secrets must exist in the challenge-manager namespace.
+  repeated string image_pull_secrets = 10 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"gitlab-group-1\""},
+    (google.api.field_behavior) = OPTIONAL
+  ];
 }
 
 message DeleteChallengeRequest {
@@ -223,6 +238,13 @@ message Challenge {
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "1"},
     (google.api.field_behavior) = OPTIONAL
   ];
+
+  // Image pull secrets to use when pulling container images for this challenge.
+  // These secrets must exist in the challenge-manager namespace.
+  repeated string image_pull_secrets = 9 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"gitlab-group-1\""},
+    (google.api.field_behavior) = OPTIONAL
+  ];
 }
 
 // The UpdateStrategy to use in case of a Challenge scenario update with running instances.
@@ -243,4 +265,271 @@ enum UpdateStrategy {
   // to intensive create/delete operations. It should be used at a last relief, for
   // instance if the update is inconsistent and the outcomes are not predictable.
   recreate = 2;
+}
+
+// SecretManager handles Kubernetes secrets for private registries and configuration.
+// This service provides CRUD operations for secrets in the challenge namespace.
+service SecretManager {
+  // List all secrets in the challenge namespace.
+  rpc ListSecrets(ListSecretsRequest) returns (ListSecretsResponse) {
+    option (google.api.http) = {get: "/api/v1/secrets"};
+  }
+
+  // Create a Docker registry secret for pulling images from private registries.
+  rpc CreateDockerRegistrySecret(CreateDockerRegistrySecretRequest) returns (Secret) {
+    option (google.api.http) = {
+      post: "/api/v1/secrets/docker-registry"
+      body: "*"
+    };
+  }
+
+  // Create a generic opaque secret for configuration data.
+  rpc CreateGenericSecret(CreateGenericSecretRequest) returns (Secret) {
+    option (google.api.http) = {
+      post: "/api/v1/secrets/generic"
+      body: "*"
+    };
+  }
+
+  // Create a TLS secret for HTTPS ingress.
+  rpc CreateTLSSecret(CreateTLSSecretRequest) returns (Secret) {
+    option (google.api.http) = {
+      post: "/api/v1/secrets/tls"
+      body: "*"
+    };
+  }
+
+  // Delete a secret from the challenge namespace.
+  rpc DeleteSecret(DeleteSecretRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/api/v1/secrets/{name}"};
+  }
+
+  // Test registry credentials without creating a secret.
+  rpc TestRegistryConnection(TestRegistryConnectionRequest) returns (TestRegistryConnectionResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/secrets/test-registry"
+      body: "*"
+    };
+  }
+
+  // Push a scenario to an OCI registry.
+  // This endpoint receives a ZIP file containing the scenario and pushes it to the specified registry.
+  rpc PushScenario(PushScenarioRequest) returns (PushScenarioResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/scenarios/push"
+      body: "*"
+    };
+  }
+}
+
+// Request to list secrets.
+message ListSecretsRequest {
+  // The namespace to list secrets from. Defaults to the challenge namespace.
+  string namespace = 1 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"chall-manager\""},
+    (google.api.field_behavior) = OPTIONAL
+  ];
+}
+
+// Response containing the list of secrets.
+message ListSecretsResponse {
+  // The list of secrets.
+  repeated Secret secrets = 1;
+}
+
+// A Kubernetes secret representation.
+message Secret {
+  // The secret name.
+  string name = 1 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"gitlab-registry\""},
+    (google.api.field_behavior) = REQUIRED
+  ];
+
+  // The secret type (e.g., kubernetes.io/dockerconfigjson, Opaque, kubernetes.io/tls).
+  string type = 2 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"kubernetes.io/dockerconfigjson\""},
+    (google.api.field_behavior) = REQUIRED
+  ];
+
+  // The namespace where the secret is stored.
+  string namespace = 3 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"chall-manager\""},
+    (google.api.field_behavior) = REQUIRED
+  ];
+
+  // The creation timestamp.
+  google.protobuf.Timestamp created_at = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // The keys stored in the secret.
+  repeated string data_keys = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // List of challenge IDs that use this secret.
+  repeated string used_by_challenges = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Request to create a Docker registry secret.
+message CreateDockerRegistrySecretRequest {
+  // The secret name.
+  string name = 1 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"gitlab-registry\""},
+    (google.api.field_behavior) = REQUIRED
+  ];
+
+  // The namespace to create the secret in. Defaults to chall-manager.
+  string namespace = 2 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"chall-manager\""},
+    (google.api.field_behavior) = OPTIONAL
+  ];
+
+  // The registry server URL.
+  string server = 3 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"registry.gitlab.com\""},
+    (google.api.field_behavior) = REQUIRED
+  ];
+
+  // The registry username.
+  string username = 4 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"my-username\""},
+    (google.api.field_behavior) = REQUIRED
+  ];
+
+  // The registry password or token.
+  string password = 5 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"glpat-xxx\""},
+    (google.api.field_behavior) = REQUIRED
+  ];
+
+  // The email associated with the registry account.
+  string email = 6 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"user@example.com\""},
+    (google.api.field_behavior) = OPTIONAL
+  ];
+}
+
+// Request to create a generic opaque secret.
+message CreateGenericSecretRequest {
+  // The secret name.
+  string name = 1 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"challenge-flags\""},
+    (google.api.field_behavior) = REQUIRED
+  ];
+
+  // The namespace to create the secret in. Defaults to chall-manager.
+  string namespace = 2 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"chall-manager\""},
+    (google.api.field_behavior) = OPTIONAL
+  ];
+
+  // The key-value data to store in the secret.
+  map<string, string> data = 3 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Request to create a TLS secret.
+message CreateTLSSecretRequest {
+  // The secret name.
+  string name = 1 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"challenge-tls\""},
+    (google.api.field_behavior) = REQUIRED
+  ];
+
+  // The namespace to create the secret in. Defaults to chall-manager.
+  string namespace = 2 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"chall-manager\""},
+    (google.api.field_behavior) = OPTIONAL
+  ];
+
+  // The TLS certificate in PEM format.
+  string cert = 3 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"-----BEGIN CERTIFICATE-----\\n...\\n-----END CERTIFICATE-----\""},
+    (google.api.field_behavior) = REQUIRED
+  ];
+
+  // The TLS private key in PEM format.
+  string key = 4 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"-----BEGIN PRIVATE KEY-----\\n...\\n-----END PRIVATE KEY-----\""},
+    (google.api.field_behavior) = REQUIRED
+  ];
+}
+
+// Request to delete a secret.
+message DeleteSecretRequest {
+  // The secret name.
+  string name = 1 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"gitlab-registry\""},
+    (google.api.field_behavior) = REQUIRED
+  ];
+
+  // The namespace where the secret is stored. Defaults to chall-manager.
+  string namespace = 2 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"chall-manager\""},
+    (google.api.field_behavior) = OPTIONAL
+  ];
+}
+
+// Request to test registry credentials.
+message TestRegistryConnectionRequest {
+  // The registry server URL.
+  string server = 1 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"registry.gitlab.com\""},
+    (google.api.field_behavior) = REQUIRED
+  ];
+
+  // The registry username.
+  string username = 2 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"my-username\""},
+    (google.api.field_behavior) = REQUIRED
+  ];
+
+  // The registry password or token.
+  string password = 3 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"glpat-xxx\""},
+    (google.api.field_behavior) = REQUIRED
+  ];
+}
+
+// Response from testing registry credentials.
+message TestRegistryConnectionResponse {
+  // Whether the connection was successful.
+  bool success = 1;
+
+  // A message describing the result.
+  string message = 2;
+
+  // Whether authentication was successful.
+  bool authenticated = 3;
+}
+
+// Request to push a scenario to an OCI registry.
+message PushScenarioRequest {
+  // The scenario files as a ZIP archive.
+  // The ZIP should contain Pulumi.yaml, __main__.py, and requirements.txt
+  bytes scenario_zip = 1 [
+    (google.api.field_behavior) = REQUIRED
+  ];
+
+  // The OCI reference to push to (e.g., "registry.lan/category/challenge:v1.0.0").
+  // Uses the globally configured OCI registry credentials (OCI_USERNAME, OCI_PASSWORD).
+  string reference = 2 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"registry.lan/category/challenge:v1.0.0\""},
+    (google.api.field_behavior) = REQUIRED
+  ];
+}
+
+// Response from pushing a scenario to a registry.
+message PushScenarioResponse {
+  // Whether the push was successful.
+  bool success = 1;
+
+  // The scenario reference that was pushed.
+  string reference = 2 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"registry.lan/category/challenge:v1.0.0\""}
+  ];
+
+  // The digest of the pushed scenario.
+  string digest = 3 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"sha256:a0b1c2d3...\""}
+  ];
+
+  // A message describing the result.
+  string message = 4;
 }

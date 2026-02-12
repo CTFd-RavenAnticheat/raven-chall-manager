@@ -397,6 +397,67 @@ func (kmp *Kompose) provision(ctx *pulumi.Context, in KomposeArgsOutput, opts ..
 		return
 	}
 
+	// => ConfigMap for packet capture daemon script (if packet capture enabled for any container)
+	in.PacketCapture().ApplyT(func(pc map[string]interface{}) error {
+		if len(pc) == 0 {
+			return nil
+		}
+		// Check if any container has packet capture enabled
+		hasPacketCapture := false
+		for _, v := range pc {
+			if enabled, ok := v.(bool); ok && enabled {
+				hasPacketCapture = true
+				break
+			}
+		}
+		if !hasPacketCapture {
+			return nil
+		}
+
+		pcapScriptName := pulumi.All(in.Identity(), in.Label()).ApplyT(func(all []any) string {
+			id := all[0].(string)
+			if lbl, ok := all[1].(string); ok && lbl != "" {
+				return fmt.Sprintf("kmp-pcap-script-%s-%s", lbl, id)
+			}
+			return fmt.Sprintf("kmp-pcap-script-%s", id)
+		}).(pulumi.StringOutput)
+
+		labels := pulumi.All(in.Identity(), in.Label()).ApplyT(func(all []any) pulumi.StringMap {
+			id := all[0].(string)
+			if lbl, ok := all[1].(string); ok && lbl != "" {
+				return pulumi.StringMap{
+					"app.kubernetes.io/name":          pulumi.String(id),
+					"app.kubernetes.io/component":     pulumi.String("chall-manager"),
+					"app.kubernetes.io/part-of":       pulumi.String("chall-manager"),
+					"chall-manager.ctfer.io/identity": pulumi.String(id),
+					"chall-manager.ctfer.io/label":    pulumi.String(lbl),
+				}
+			}
+			return pulumi.StringMap{
+				"app.kubernetes.io/name":          pulumi.String(id),
+				"app.kubernetes.io/component":     pulumi.String("chall-manager"),
+				"app.kubernetes.io/part-of":       pulumi.String("chall-manager"),
+				"chall-manager.ctfer.io/identity": pulumi.String(id),
+			}
+		}).(pulumi.StringMapOutput)
+
+		_, err := corev1.NewConfigMap(ctx, "kmp-pcap-script", &corev1.ConfigMapArgs{
+			Immutable: pulumi.BoolPtr(true),
+			Metadata: metav1.ObjectMetaArgs{
+				Name:      pcapScriptName,
+				Namespace: kmp.ns.Metadata.Name().Elem(),
+				Labels:    labels,
+			},
+			Data: pulumi.StringMap{
+				"capture-daemon.sh": pulumi.String(captureDaemonScript),
+			},
+		}, opts...)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+
 	// Transform resources to match expected configuration
 	opts = append(opts, pulumi.Transforms([]pulumi.ResourceTransform{
 		// Inject namespace
@@ -479,6 +540,177 @@ func (kmp *Kompose) provision(ctx *pulumi.Context, in KomposeArgsOutput, opts ..
 		func(_ context.Context, args *pulumi.ResourceTransformArgs) *pulumi.ResourceTransformResult {
 			if args.Type == "kubernetes:apps/v1:Deployment" {
 				args.Props["spec"].(pulumi.Map)["template"].(pulumi.Map)["spec"].(pulumi.Map)["automountServiceAccountToken"] = pulumi.Bool(false)
+				return &pulumi.ResourceTransformResult{
+					Props: args.Props,
+					Opts:  args.Opts,
+				}
+			}
+			return nil
+		},
+		// Add ImagePullSecrets to deployments
+		func(_ context.Context, args *pulumi.ResourceTransformArgs) *pulumi.ResourceTransformResult {
+			if args.Type == "kubernetes:apps/v1:Deployment" {
+				args.Props["spec"].(pulumi.Map)["template"].(pulumi.Map)["spec"].(pulumi.Map)["imagePullSecrets"] = in.ImagePullSecrets().ApplyT(func(secrets []string) []pulumi.Map {
+					if len(secrets) == 0 {
+						return nil
+					}
+					refs := make([]pulumi.Map, len(secrets))
+					for i, secret := range secrets {
+						refs[i] = pulumi.Map{"name": pulumi.String(secret)}
+					}
+					return refs
+				})
+				return &pulumi.ResourceTransformResult{
+					Props: args.Props,
+					Opts:  args.Opts,
+				}
+			}
+			return nil
+		},
+		// Add packet capture sidecar and volumes to deployments
+		func(_ context.Context, args *pulumi.ResourceTransformArgs) *pulumi.ResourceTransformResult {
+			if args.Type == "kubernetes:apps/v1:Deployment" {
+				deploymentName := strings.TrimPrefix(args.Name, "kompose:default/")
+
+				// Check if packet capture is enabled for this container
+				in.PacketCapture().ApplyT(func(pc map[string]interface{}) error {
+					enabled, hasKey := pc[deploymentName]
+					if !hasKey {
+						return nil
+					}
+					isEnabled, ok := enabled.(bool)
+					if !ok || !isEnabled {
+						return nil
+					}
+
+					// Get the identity and label for naming
+					identity := in.Identity().ToStringOutput().ApplyT(func(id string) string {
+						return id
+					}).(pulumi.StringOutput)
+
+					label := in.Label().ToStringPtrOutput().ApplyT(func(lbl *string) string {
+						if lbl != nil {
+							return *lbl
+						}
+						return ""
+					}).(pulumi.StringOutput)
+
+					// Enable share process namespace
+					args.Props["spec"].(pulumi.Map)["template"].(pulumi.Map)["spec"].(pulumi.Map)["shareProcessNamespace"] = pulumi.Bool(true)
+
+					// Get ports for this container from the deployment spec
+					var portList string
+					if containers, ok := args.Props["spec"].(pulumi.Map)["template"].(pulumi.Map)["spec"].(pulumi.Map)["containers"].(pulumi.Array); ok && len(containers) > 0 {
+						if mainContainer, ok := containers[0].(pulumi.Map); ok {
+							if ports, ok := mainContainer["ports"].(pulumi.Array); ok {
+								portStrs := make([]string, 0, len(ports))
+								for _, port := range ports {
+									if portMap, ok := port.(pulumi.Map); ok {
+										if containerPort, ok := portMap["containerPort"].(pulumi.Int); ok {
+											protocol := "tcp"
+											if proto, ok := portMap["protocol"].(pulumi.String); ok && proto != "" {
+												protocol = strings.ToLower(string(proto))
+											}
+											portStrs = append(portStrs, fmt.Sprintf("%d:%s", containerPort, protocol))
+										}
+									}
+								}
+								portList = strings.Join(portStrs, ",")
+							}
+						}
+					}
+
+					// Build packet capture sidecar container
+					sidecar := pulumi.Map{
+						"name":            pulumi.Sprintf("%s-pcap", identity),
+						"image":           pulumi.String("nicolaka/netshoot:v0.13"),
+						"imagePullPolicy": pulumi.String("IfNotPresent"),
+						"command":         pulumi.ToStringArray([]string{"/bin/bash", "/scripts/capture-daemon.sh"}),
+						"env": pulumi.Array{
+							pulumi.Map{"name": pulumi.String("CONTAINER_NAME"), "value": pulumi.String(deploymentName)},
+							pulumi.Map{"name": pulumi.String("IDENTITY"), "value": identity},
+							pulumi.Map{"name": pulumi.String("LABEL"), "value": label},
+							pulumi.Map{"name": pulumi.String("PORTS"), "value": pulumi.String(portList)},
+							pulumi.Map{"name": pulumi.String("CAPTURE_DIR"), "value": pulumi.String("/captures")},
+						},
+						"securityContext": pulumi.Map{
+							"privileged": pulumi.Bool(true),
+							"runAsUser":  pulumi.Int(0),
+							"capabilities": pulumi.Map{
+								"add": pulumi.ToStringArray([]string{"NET_RAW", "NET_ADMIN"}),
+							},
+						},
+						"volumeMounts": pulumi.Array{
+							pulumi.Map{
+								"name":      pulumi.String("packet-captures"),
+								"mountPath": pulumi.String("/captures"),
+								"subPath":   pulumi.Sprintf("captures/%s/%s", identity, deploymentName),
+							},
+							pulumi.Map{
+								"name":      pulumi.String("capture-script"),
+								"mountPath": pulumi.String("/scripts"),
+								"readOnly":  pulumi.Bool(true),
+							},
+						},
+						"resources": pulumi.Map{
+							"limits": pulumi.Map{
+								"cpu":    pulumi.String("200m"),
+								"memory": pulumi.String("256Mi"),
+							},
+							"requests": pulumi.Map{
+								"cpu":    pulumi.String("100m"),
+								"memory": pulumi.String("128Mi"),
+							},
+						},
+					}
+
+					// Add sidecar to containers
+					if containers, ok := args.Props["spec"].(pulumi.Map)["template"].(pulumi.Map)["spec"].(pulumi.Map)["containers"].(pulumi.Array); ok {
+						args.Props["spec"].(pulumi.Map)["template"].(pulumi.Map)["spec"].(pulumi.Map)["containers"] = append(containers, sidecar)
+					}
+
+					// Add volumes
+					pcapPVCName := in.PacketCapturePVC().ToStringPtrOutput().ApplyT(func(p *string) string {
+						if p != nil && *p != "" {
+							return *p
+						}
+						return "pcap-core"
+					}).(pulumi.StringOutput)
+
+					pcapScriptName := pulumi.All(in.Identity(), in.Label()).ApplyT(func(all []any) string {
+						id := all[0].(string)
+						if lbl, ok := all[1].(string); ok && lbl != "" {
+							return fmt.Sprintf("kmp-pcap-script-%s-%s", lbl, id)
+						}
+						return fmt.Sprintf("kmp-pcap-script-%s", id)
+					}).(pulumi.StringOutput)
+
+					// Create volumes as a pulumi.Array
+					volumes := pulumi.Array{
+						pulumi.Map{
+							"name": pulumi.String("packet-captures"),
+							"persistentVolumeClaim": pulumi.Map{
+								"claimName": pcapPVCName,
+							},
+						},
+						pulumi.Map{
+							"name": pulumi.String("capture-script"),
+							"configMap": pulumi.Map{
+								"name":        pcapScriptName,
+								"defaultMode": pulumi.Int(0755),
+							},
+						},
+					}
+
+					if existingVolumes, ok := args.Props["spec"].(pulumi.Map)["template"].(pulumi.Map)["spec"].(pulumi.Map)["volumes"].(pulumi.Array); ok {
+						args.Props["spec"].(pulumi.Map)["template"].(pulumi.Map)["spec"].(pulumi.Map)["volumes"] = append(existingVolumes, volumes...)
+					} else {
+						args.Props["spec"].(pulumi.Map)["template"].(pulumi.Map)["spec"].(pulumi.Map)["volumes"] = volumes
+					}
+
+					return nil
+				})
+
 				return &pulumi.ResourceTransformResult{
 					Props: args.Props,
 					Opts:  args.Opts,
@@ -951,10 +1183,19 @@ type KomposeArgsRaw struct {
 
 	Ports map[string][]PortBinding `pulumi:"ports"`
 
+	// PacketCapture is a map of container names to whether packet capture is enabled.
+	// If a container name is present and set to true, packet capture will be enabled for that container.
+	PacketCapture map[string]bool `pulumi:"packetCapture"`
+
 	FromCIDR           string            `pulumi:"fromCIDR"`
 	IngressNamespace   string            `pulumi:"ingressNamespace"`
 	IngressLabels      map[string]string `pulumi:"ingressLabels"`
 	IngressAnnotations map[string]string `pulumi:"ingressAnnotations"`
+	ImagePullSecrets   []string          `pulumi:"imagePullSecrets"`
+
+	// PacketCapturePVC is the name of the shared PVC for packet captures.
+	// If not set, defaults to "pcap-core".
+	PacketCapturePVC *string `pulumi:"packetCapturePVC"`
 }
 
 type KomposeArgsInput interface {
@@ -980,10 +1221,17 @@ type KomposeArgs struct {
 	// See #905 for more context.
 	Ports PortBindingMapArrayInput `pulumi:"ports"`
 
-	FromCIDR           pulumi.StringInput    `pulumi:"fromCIDR"`
-	IngressNamespace   pulumi.StringInput    `pulumi:"ingressNamespace"`
-	IngressLabels      pulumi.StringMapInput `pulumi:"ingressLabels"`
-	IngressAnnotations pulumi.StringMapInput `pulumi:"ingressAnnotations"`
+	// PacketCapture is a map of container names to whether packet capture is enabled.
+	PacketCapture pulumi.MapInput `pulumi:"packetCapture"`
+
+	FromCIDR           pulumi.StringInput      `pulumi:"fromCIDR"`
+	IngressNamespace   pulumi.StringInput      `pulumi:"ingressNamespace"`
+	IngressLabels      pulumi.StringMapInput   `pulumi:"ingressLabels"`
+	IngressAnnotations pulumi.StringMapInput   `pulumi:"ingressAnnotations"`
+	ImagePullSecrets   pulumi.StringArrayInput `pulumi:"imagePullSecrets"`
+
+	// PacketCapturePVC is the name of the shared PVC for packet captures.
+	PacketCapturePVC pulumi.StringPtrInput `pulumi:"packetCapturePVC"`
 }
 
 func (KomposeArgs) ElementType() reflect.Type {
@@ -1059,6 +1307,31 @@ func (o KomposeArgsOutput) IngressAnnotations() pulumi.StringMapOutput {
 	return o.ApplyT(func(args KomposeArgsRaw) map[string]string {
 		return args.IngressAnnotations
 	}).(pulumi.StringMapOutput)
+}
+
+func (o KomposeArgsOutput) ImagePullSecrets() pulumi.StringArrayOutput {
+	return o.ApplyT(func(args KomposeArgsRaw) []string {
+		return args.ImagePullSecrets
+	}).(pulumi.StringArrayOutput)
+}
+
+func (o KomposeArgsOutput) PacketCapture() pulumi.MapOutput {
+	return o.ApplyT(func(args KomposeArgsRaw) map[string]interface{} {
+		if args.PacketCapture == nil {
+			return nil
+		}
+		out := make(map[string]interface{}, len(args.PacketCapture))
+		for k, v := range args.PacketCapture {
+			out[k] = v
+		}
+		return out
+	}).(pulumi.MapOutput)
+}
+
+func (o KomposeArgsOutput) PacketCapturePVC() pulumi.StringPtrOutput {
+	return o.ApplyT(func(args KomposeArgsRaw) *string {
+		return args.PacketCapturePVC
+	}).(pulumi.StringPtrOutput)
 }
 
 func init() {

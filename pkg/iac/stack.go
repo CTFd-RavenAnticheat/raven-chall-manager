@@ -31,10 +31,21 @@ func NewStack(ctx context.Context, fschall *fsapi.Challenge, id string) (*Stack,
 		return nil, &errs.ErrInternal{Sub: err}
 	}
 
-	if err := stack.pas.SetAllConfig(ctx, auto.ConfigMap{
+	config := auto.ConfigMap{
 		"identity":     auto.ConfigValue{Value: id},
 		"challenge_id": auto.ConfigValue{Value: fschall.ID},
-	}); err != nil {
+	}
+
+	// Set image pull secrets if any
+	if len(fschall.ImagePullSecrets) > 0 {
+		b, err := json.Marshal(fschall.ImagePullSecrets)
+		if err != nil {
+			return nil, &errs.ErrInternal{Sub: err}
+		}
+		config["image_pull_secrets"] = auto.ConfigValue{Value: string(b)}
+	}
+
+	if err := stack.pas.SetAllConfig(ctx, config); err != nil {
 		return nil, &errs.ErrInternal{Sub: err}
 	}
 
@@ -65,24 +76,26 @@ func LoadStack(ctx context.Context, scenario, id string) (*Stack, error) {
 		return nil, &errs.ErrScenario{Sub: errors.Wrap(err, "invalid Pulumi YAML content")}
 	}
 
-	// Handle Go caching
+	// Handle runtime-specific caching
 	cacheDir := global.Conf.Cache
 	if cacheDir == "" {
 		home, _ := os.UserHomeDir()
 		cacheDir = filepath.Join(home, ".cache", "chall-manager")
 	}
-	goCache := filepath.Join(cacheDir, "go-build")
-	goModCache := filepath.Join(cacheDir, "go-mod")
-	_ = os.MkdirAll(goCache, 0o700)
-	_ = os.MkdirAll(goModCache, 0o700)
 
 	// Create workspace in scenario directory
 	envVars := map[string]string{
 		"PULUMI_CONFIG_PASSPHRASE": "",
 		"CM_PROJECT":               yml.Name.String(), // necessary to load the configuration
-		"GOCACHE":                  goCache,
-		"GOMODCACHE":               goModCache,
 	}
+
+	goCache := filepath.Join(cacheDir, "go-build")
+	goModCache := filepath.Join(cacheDir, "go-mod")
+	_ = os.MkdirAll(goCache, 0o700)
+	_ = os.MkdirAll(goModCache, 0o700)
+	envVars["GOCACHE"] = goCache
+	envVars["GOMODCACHE"] = goModCache
+
 	ws, err := auto.NewLocalWorkspace(ctx,
 		auto.WorkDir(dir),
 		auto.EnvVars(envVars),

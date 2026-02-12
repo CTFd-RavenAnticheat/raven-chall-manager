@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  web-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+      - REGISTRY_URL=${REGISTRY_URL:-localhost:5000}
+      - REGISTRY_USERNAME=${REGISTRY_USERNAME:-}
+      - REGISTRY_PASSWORD=${REGISTRY_PASSWORD:-}
+    volumes:
+      - ./:/app
+    restart: unless-stopped
+    networks:
+      - chall-manager-network
+
+networks:
+  chall-manager-network:
+    external: true
+    name: chall-manager-network

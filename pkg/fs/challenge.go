@@ -15,13 +15,14 @@ import (
 // Challenge is the internal model of an API Challenge as it is stored on the
 // filesystem (at `<global.Conf.Directory>/chall/<id>/info.json`).
 type Challenge struct {
-	ID         string            `json:"id"`
-	Scenario   string            `json:"scenario"`
-	Until      *time.Time        `json:"until,omitempty"`
-	Timeout    *time.Duration    `json:"timeout,omitempty"`
-	Additional map[string]string `json:"additional,omitempty"`
-	Min        int64             `json:"min"`
-	Max        int64             `json:"max"`
+	ID               string            `json:"id"`
+	Scenario         string            `json:"scenario"`
+	Until            *time.Time        `json:"until,omitempty"`
+	Timeout          *time.Duration    `json:"timeout,omitempty"`
+	Additional       map[string]string `json:"additional,omitempty"`
+	Min              int64             `json:"min"`
+	Max              int64             `json:"max"`
+	ImagePullSecrets []string          `json:"image_pull_secrets,omitempty"`
 }
 
 func ChallengeDirectory(id string) string {

@@ -526,6 +526,17 @@ func (emp *exposedMultipod) provision(ctx *pulumi.Context, args ExposedMultipodA
 					Spec: &corev1.PodSpecArgs{
 						AutomountServiceAccountToken: pulumi.BoolPtr(false),
 						ShareProcessNamespace:        container.PacketCapture(),
+						ImagePullSecrets: args.ImagePullSecrets().ApplyT(func(secrets []string) []corev1.LocalObjectReference {
+							if len(secrets) == 0 {
+								return nil
+							}
+							refs := make([]corev1.LocalObjectReference, len(secrets))
+							for i, secret := range secrets {
+								secretName := secret
+								refs[i] = corev1.LocalObjectReference{Name: &secretName}
+							}
+							return refs
+						}).(corev1.LocalObjectReferenceArrayOutput),
 						Containers: pulumi.All(args.Identity(), container.Ports(), container.PacketCapture(), name, args.Label()).ApplyT(func(all []any) corev1.ContainerArray {
 							identity := all[0].(string)
 							pbs := all[1].([]PortBinding)
@@ -1184,6 +1195,7 @@ type ExposedMultipodArgsRaw struct {
 	IngressNamespace   string               `pulumi:"ingressNamespace"`
 	IngressLabels      map[string]string    `pulumi:"ingressLabels"`
 	IngressAnnotations map[string]string    `pulumi:"ingressAnnotations"`
+	ImagePullSecrets   []string             `pulumi:"imagePullSecrets"`
 }
 
 type ExposedMultipodArgsInput interface {
@@ -1194,17 +1206,18 @@ type ExposedMultipodArgsInput interface {
 }
 
 type ExposedMultipodArgs struct {
-	ChallengeID        pulumi.StringInput    `pulumi:"challengeID"`
-	PacketCapturePVC   pulumi.StringPtrInput `pulumi:"packetCapturePVC"`
-	Identity           pulumi.StringInput    `pulumi:"identity"`
-	Label              pulumi.StringPtrInput `pulumi:"label"`
-	Hostname           pulumi.StringInput    `pulumi:"hostname"`
-	Containers         ContainerMapInput     `pulumi:"containers"`
-	Rules              RuleArrayInput        `pulumi:"rules"`
-	FromCIDR           pulumi.StringInput    `pulumi:"fromCIDR"`
-	IngressNamespace   pulumi.StringInput    `pulumi:"ingressNamespace"`
-	IngressLabels      pulumi.StringMapInput `pulumi:"ingressLabels"`
-	IngressAnnotations pulumi.StringMapInput `pulumi:"ingressAnnotations"`
+	ChallengeID        pulumi.StringInput      `pulumi:"challengeID"`
+	PacketCapturePVC   pulumi.StringPtrInput   `pulumi:"packetCapturePVC"`
+	Identity           pulumi.StringInput      `pulumi:"identity"`
+	Label              pulumi.StringPtrInput   `pulumi:"label"`
+	Hostname           pulumi.StringInput      `pulumi:"hostname"`
+	Containers         ContainerMapInput       `pulumi:"containers"`
+	Rules              RuleArrayInput          `pulumi:"rules"`
+	FromCIDR           pulumi.StringInput      `pulumi:"fromCIDR"`
+	IngressNamespace   pulumi.StringInput      `pulumi:"ingressNamespace"`
+	IngressLabels      pulumi.StringMapInput   `pulumi:"ingressLabels"`
+	IngressAnnotations pulumi.StringMapInput   `pulumi:"ingressAnnotations"`
+	ImagePullSecrets   pulumi.StringArrayInput `pulumi:"imagePullSecrets"`
 }
 
 func (ExposedMultipodArgs) ElementType() reflect.Type {
@@ -1300,6 +1313,12 @@ func (o ExposedMultipodArgsOutput) PacketCapturePVC() pulumi.StringPtrOutput {
 	return o.ApplyT(func(args ExposedMultipodArgsRaw) *string {
 		return args.PacketCapturePVC
 	}).(pulumi.StringPtrOutput)
+}
+
+func (o ExposedMultipodArgsOutput) ImagePullSecrets() pulumi.StringArrayOutput {
+	return o.ApplyT(func(args ExposedMultipodArgsRaw) []string {
+		return args.ImagePullSecrets
+	}).(pulumi.StringArrayOutput)
 }
 
 func init() {

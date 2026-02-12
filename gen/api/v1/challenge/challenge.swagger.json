@@ -7,6 +7,9 @@
   "tags": [
     {
       "name": "ChallengeStore"
+    },
+    {
+      "name": "SecretManager"
     }
   ],
   "consumes": [
@@ -180,6 +183,248 @@
           "ChallengeStore"
         ]
       }
+    },
+    "/api/v1/scenarios/push": {
+      "post": {
+        "summary": "Push a scenario to an OCI registry.\nThis endpoint receives a ZIP file containing the scenario and pushes it to the specified registry.",
+        "operationId": "SecretManager_PushScenario",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/challengePushScenarioResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "Request to push a scenario to an OCI registry.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/challengePushScenarioRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SecretManager"
+        ]
+      }
+    },
+    "/api/v1/secrets": {
+      "get": {
+        "summary": "List all secrets in the challenge namespace.",
+        "operationId": "SecretManager_ListSecrets",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/challengeListSecretsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "namespace",
+            "description": "The namespace to list secrets from. Defaults to the challenge namespace.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "SecretManager"
+        ]
+      }
+    },
+    "/api/v1/secrets/docker-registry": {
+      "post": {
+        "summary": "Create a Docker registry secret for pulling images from private registries.",
+        "operationId": "SecretManager_CreateDockerRegistrySecret",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/challengeSecret"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "Request to create a Docker registry secret.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/challengeCreateDockerRegistrySecretRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SecretManager"
+        ]
+      }
+    },
+    "/api/v1/secrets/generic": {
+      "post": {
+        "summary": "Create a generic opaque secret for configuration data.",
+        "operationId": "SecretManager_CreateGenericSecret",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/challengeSecret"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "Request to create a generic opaque secret.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/challengeCreateGenericSecretRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SecretManager"
+        ]
+      }
+    },
+    "/api/v1/secrets/test-registry": {
+      "post": {
+        "summary": "Test registry credentials without creating a secret.",
+        "operationId": "SecretManager_TestRegistryConnection",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/challengeTestRegistryConnectionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "Request to test registry credentials.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/challengeTestRegistryConnectionRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SecretManager"
+        ]
+      }
+    },
+    "/api/v1/secrets/tls": {
+      "post": {
+        "summary": "Create a TLS secret for HTTPS ingress.",
+        "operationId": "SecretManager_CreateTLSSecret",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/challengeSecret"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "Request to create a TLS secret.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/challengeCreateTLSSecretRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SecretManager"
+        ]
+      }
+    },
+    "/api/v1/secrets/{name}": {
+      "delete": {
+        "summary": "Delete a secret from the challenge namespace.",
+        "operationId": "SecretManager_DeleteSecret",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "description": "The secret name.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "namespace",
+            "description": "The namespace where the secret is stored. Defaults to chall-manager.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "SecretManager"
+        ]
+      }
     }
   },
   "definitions": {
@@ -225,6 +470,14 @@
           "format": "int64",
           "example": 1,
           "description": "Max from the pooler feature.\nDetermine the maximum number of instances that needs to be deployed until we\nstop pre-provisioning ones in the pool."
+        },
+        "imagePullSecrets": {
+          "type": "array",
+          "example": "gitlab-group-1",
+          "items": {
+            "type": "string"
+          },
+          "description": "Image pull secrets to use when pulling container images for this challenge.\nThese secrets must exist in the challenge-manager namespace."
         }
       },
       "description": "The request to update a challenge."
@@ -277,6 +530,14 @@
           "format": "int64",
           "example": 1,
           "description": "Max from the pooler feature.\nDetermine the maximum number of instances that needs to be deployed until we\nstop pre-provisioning ones in the pool."
+        },
+        "imagePullSecrets": {
+          "type": "array",
+          "example": "gitlab-group-1",
+          "items": {
+            "type": "string"
+          },
+          "description": "Image pull secrets to use when pulling container images for this challenge.\nThese secrets must exist in the challenge-manager namespace."
         }
       },
       "description": "The challenge object that the chall-manager exposes.\nNotice it differs from the internal representation, as it also handles\nfilesystem-related information.",
@@ -325,6 +586,14 @@
           "format": "int64",
           "example": 1,
           "description": "Max from the pooler feature.\nDetermine the maximum number of instances that needs to be deployed until we\nstop pre-provisioning ones in the pool."
+        },
+        "imagePullSecrets": {
+          "type": "array",
+          "example": "gitlab-group-1",
+          "items": {
+            "type": "string"
+          },
+          "description": "Image pull secrets to use when pulling container images for this challenge.\nThese secrets must exist in the challenge-manager namespace.\nMultiple challenges can share the same secret(s)."
         }
       },
       "description": "The request to create a challenge.",
@@ -332,6 +601,256 @@
         "id",
         "scenario"
       ]
+    },
+    "challengeCreateDockerRegistrySecretRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "example": "gitlab-registry",
+          "description": "The secret name."
+        },
+        "namespace": {
+          "type": "string",
+          "example": "chall-manager",
+          "description": "The namespace to create the secret in. Defaults to chall-manager."
+        },
+        "server": {
+          "type": "string",
+          "example": "registry.gitlab.com",
+          "description": "The registry server URL."
+        },
+        "username": {
+          "type": "string",
+          "example": "my-username",
+          "description": "The registry username."
+        },
+        "password": {
+          "type": "string",
+          "example": "glpat-xxx",
+          "description": "The registry password or token."
+        },
+        "email": {
+          "type": "string",
+          "example": "user@example.com",
+          "description": "The email associated with the registry account."
+        }
+      },
+      "description": "Request to create a Docker registry secret.",
+      "required": [
+        "name",
+        "server",
+        "username",
+        "password"
+      ]
+    },
+    "challengeCreateGenericSecretRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "example": "challenge-flags",
+          "description": "The secret name."
+        },
+        "namespace": {
+          "type": "string",
+          "example": "chall-manager",
+          "description": "The namespace to create the secret in. Defaults to chall-manager."
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The key-value data to store in the secret."
+        }
+      },
+      "description": "Request to create a generic opaque secret.",
+      "required": [
+        "name",
+        "data"
+      ]
+    },
+    "challengeCreateTLSSecretRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "example": "challenge-tls",
+          "description": "The secret name."
+        },
+        "namespace": {
+          "type": "string",
+          "example": "chall-manager",
+          "description": "The namespace to create the secret in. Defaults to chall-manager."
+        },
+        "cert": {
+          "type": "string",
+          "example": "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+          "description": "The TLS certificate in PEM format."
+        },
+        "key": {
+          "type": "string",
+          "example": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----",
+          "description": "The TLS private key in PEM format."
+        }
+      },
+      "description": "Request to create a TLS secret.",
+      "required": [
+        "name",
+        "cert",
+        "key"
+      ]
+    },
+    "challengeListSecretsResponse": {
+      "type": "object",
+      "properties": {
+        "secrets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/challengeSecret"
+          },
+          "description": "The list of secrets."
+        }
+      },
+      "description": "Response containing the list of secrets."
+    },
+    "challengePushScenarioRequest": {
+      "type": "object",
+      "properties": {
+        "scenarioZip": {
+          "type": "string",
+          "format": "byte",
+          "title": "The scenario files as a ZIP archive.\nThe ZIP should contain Pulumi.yaml, __main__.py, and requirements.txt"
+        },
+        "reference": {
+          "type": "string",
+          "example": "registry.lan/category/challenge:v1.0.0",
+          "description": "The OCI reference to push to (e.g., \"registry.lan/category/challenge:v1.0.0\").\nUses the globally configured OCI registry credentials (OCI_USERNAME, OCI_PASSWORD)."
+        }
+      },
+      "description": "Request to push a scenario to an OCI registry.",
+      "required": [
+        "scenarioZip",
+        "reference"
+      ]
+    },
+    "challengePushScenarioResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Whether the push was successful."
+        },
+        "reference": {
+          "type": "string",
+          "example": "registry.lan/category/challenge:v1.0.0",
+          "description": "The scenario reference that was pushed."
+        },
+        "digest": {
+          "type": "string",
+          "example": "sha256:a0b1c2d3...",
+          "description": "The digest of the pushed scenario."
+        },
+        "message": {
+          "type": "string",
+          "description": "A message describing the result."
+        }
+      },
+      "description": "Response from pushing a scenario to a registry."
+    },
+    "challengeSecret": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "example": "gitlab-registry",
+          "description": "The secret name."
+        },
+        "type": {
+          "type": "string",
+          "example": "kubernetes.io/dockerconfigjson",
+          "description": "The secret type (e.g., kubernetes.io/dockerconfigjson, Opaque, kubernetes.io/tls)."
+        },
+        "namespace": {
+          "type": "string",
+          "example": "chall-manager",
+          "description": "The namespace where the secret is stored."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The creation timestamp.",
+          "readOnly": true
+        },
+        "dataKeys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The keys stored in the secret.",
+          "readOnly": true
+        },
+        "usedByChallenges": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of challenge IDs that use this secret.",
+          "readOnly": true
+        }
+      },
+      "description": "A Kubernetes secret representation.",
+      "required": [
+        "name",
+        "type",
+        "namespace"
+      ]
+    },
+    "challengeTestRegistryConnectionRequest": {
+      "type": "object",
+      "properties": {
+        "server": {
+          "type": "string",
+          "example": "registry.gitlab.com",
+          "description": "The registry server URL."
+        },
+        "username": {
+          "type": "string",
+          "example": "my-username",
+          "description": "The registry username."
+        },
+        "password": {
+          "type": "string",
+          "example": "glpat-xxx",
+          "description": "The registry password or token."
+        }
+      },
+      "description": "Request to test registry credentials.",
+      "required": [
+        "server",
+        "username",
+        "password"
+      ]
+    },
+    "challengeTestRegistryConnectionResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Whether the connection was successful."
+        },
+        "message": {
+          "type": "string",
+          "description": "A message describing the result."
+        },
+        "authenticated": {
+          "type": "boolean",
+          "description": "Whether authentication was successful."
+        }
+      },
+      "description": "Response from testing registry credentials."
     },
     "challengeUpdateStrategy": {
       "type": "string",

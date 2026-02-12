@@ -156,6 +156,9 @@ func (store *Store) UpdateChallenge(ctx context.Context, req *UpdateChallengeReq
 		if slices.Contains(um.Paths, "max") {
 			fschall.Max = req.Max
 		}
+		if slices.Contains(um.Paths, "image_pull_secrets") {
+			fschall.ImagePullSecrets = req.ImagePullSecrets
+		}
 	}
 
 	var oldScn *string
@@ -480,13 +483,14 @@ func (store *Store) UpdateChallenge(ctx context.Context, req *UpdateChallengeReq
 	}
 
 	return &Challenge{
-		Id:         req.Id,
-		Scenario:   fschall.Scenario,
-		Additional: fschall.Additional,
-		Min:        fschall.Min,
-		Max:        fschall.Max,
-		Timeout:    toPBDuration(fschall.Timeout),
-		Until:      toPBTimestamp(fschall.Until),
-		Instances:  oists,
+		Id:               req.Id,
+		Scenario:         fschall.Scenario,
+		Additional:       fschall.Additional,
+		Min:              fschall.Min,
+		Max:              fschall.Max,
+		Timeout:          toPBDuration(fschall.Timeout),
+		Until:            toPBTimestamp(fschall.Until),
+		Instances:        oists,
+		ImagePullSecrets: fschall.ImagePullSecrets,
 	}, nil
 }

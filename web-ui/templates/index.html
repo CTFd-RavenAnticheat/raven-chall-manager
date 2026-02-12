@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chall-Manager Scenario Builder</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚩 Chall-Manager Scenario Builder</h1>
+            <p>Create and deploy CTF challenge scenarios</p>
+        </header>
+
+        <div class="main-card">
+            <div class="card-header">
+                <h2>Choose Scenario Type</h2>
+                <div class="scenario-type-selector">
+                    <button class="type-btn active" data-type="monopod">
+                        📦 Monopod<br>
+                        <small>Single Container</small>
+                    </button>
+                    <button class="type-btn" data-type="multipod">
+                        📦📦 Multipod<br>
+                        <small>Multi-Container</small>
+                    </button>
+                    <button class="type-btn" data-type="kompose">
+                        🐳 Docker Compose<br>
+                        <small>Import YAML</small>
+                    </button>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <form id="scenario-form">
+                    <!-- Common Configuration -->
+                    <div class="form-section">
+                        <h3>⚙️ Basic Configuration</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="identity">Challenge Identity * (scenario name)</label>
+                                <input type="text" id="identity" name="identity" required 
+                                       placeholder="e.g., evenbtrfs">
+                            </div>
+                            <div class="form-group">
+                                <label for="hostname">Hostname</label>
+                                <input type="text" id="hostname" name="hostname"
+                                       placeholder="e.g., 172.18.0.2">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="connection_format">Connection Format</label>
+                                <input type="text" id="connection_format" name="connection_format"
+                                       placeholder="e.g., nc %s, https://%s" value="nc %s">
+                                <small>Use %s as placeholder for URL</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="label">Label</label>
+                                <input type="text" id="label" name="label"
+                                       placeholder="e.g., web, crypto, pwn">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Monopod Section -->
+                    <div id="monopod-section" class="scenario-specific active">
+                        <div class="form-section">
+                            <h3>📦 Container Configuration</h3>
+                            <div id="monopod-containers">
+                                <div class="container-card" data-container-idx="0">
+                                    <h4>Container</h4>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Name *</label>
+                                            <input type="text" class="container-name" required value="main">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Image *</label>
+                                            <input type="text" class="container-image" required 
+                                                   placeholder="registry.example.com/image:tag">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Ports</label>
+                                        <div class="ports-list">
+                                            <div class="port-row">
+                                                <input type="number" class="port-number" placeholder="Port" 
+                                                       min="1" max="65535" value="80">
+                                                <select class="port-protocol">
+                                                    <option value="TCP">TCP</option>
+                                                    <option value="UDP">UDP</option>
+                                                </select>
+                                                <select class="port-expose">
+                                                    <option value="internal">Internal</option>
+                                                    <option value="NodePort" selected>NodePort</option>
+                                                    <option value="LoadBalancer">LoadBalancer</option>
+                                                    <option value="ingress">Ingress</option>
+                                                </select>
+                                                <button type="button" class="remove-port-btn" onclick="removePort(this)">✕</button>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="add-btn" onclick="addPort(this)">+ Add Port</button>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Environment Variables</label>
+                                            <textarea class="container-envs" rows="3" 
+                                                      placeholder="KEY=value&#10;DATABASE_URL=postgres://..."></textarea>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Files (path=content format)</label>
+                                            <textarea class="container-files" rows="3" 
+                                                      placeholder="/app/config.txt=Hello World&#10;/etc/flag.txt=CTF{...}"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>CPU Limit</label>
+                                            <input type="text" class="container-cpu" placeholder="e.g., 500m" value="500m">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Memory Limit</label>
+                                            <input type="text" class="container-memory" placeholder="e.g., 256Mi" value="256Mi">
+                                        </div>
+                                    </div>
+                                    <div class="form-group checkbox-group">
+                                        <input type="checkbox" class="container-pcap" id="pcap-0" checked>
+                                        <label for="pcap-0">Enable Packet Capture (default: true)</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Multipod Section -->
+                    <div id="multipod-section" class="scenario-specific">
+                        <div class="form-section">
+                            <h3>📦📦 Containers</h3>
+                            <div id="multipod-containers">
+                                <!-- Containers will be added dynamically -->
+                            </div>
+                            <button type="button" class="add-btn" onclick="addMultipodContainer()">
+                                + Add Container
+                            </button>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>🔗 Network Rules</h3>
+                            <div id="multipod-rules">
+                                <!-- Rules will be added dynamically -->
+                            </div>
+                            <button type="button" class="add-btn" onclick="addRule()">
+                                + Add Rule
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Kompose Section -->
+                    <div id="kompose-section" class="scenario-specific">
+                        <div class="form-section">
+                            <h3>🐳 Docker Compose YAML</h3>
+                            <div class="form-group">
+                                <label>Docker Compose Configuration *</label>
+                                <textarea id="compose-yaml" rows="15" 
+                                          placeholder="version: '3'&#10;services:&#10;  web:&#10;    image: nginx:latest"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scenario Registry -->
+                    <div class="form-section">
+                        <h3>🔐 Scenario Registry</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="registry_url">Registry URL</label>
+                                <input type="text" id="registry_url" name="registry_url" 
+                                       placeholder="registry.io">
+                            </div>
+                            <div class="form-group">
+                                <label for="tag">Version Tag</label>
+                                <input type="text" id="tag" name="tag" value="latest">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Options -->
+                    <div class="form-section">
+                        <h3>🔧 Advanced Options</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="image_pull_secrets">Image Pull Secrets (one per line)</label>
+                                <textarea id="image_pull_secrets" name="image_pull_secrets" rows="3"
+                                          placeholder="gitlab-registry&#10;dockerhub-secret"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="packet_capture_pvc">Packet Capture PVC</label>
+                                <input type="text" id="packet_capture_pvc" name="packet_capture_pvc" 
+                                       placeholder="default: pcap-core" value="pcap-core">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="ingress_namespace">Ingress Namespace</label>
+                                <input type="text" id="ingress_namespace" name="ingress_namespace" 
+                                       placeholder="default: networking" value="networking">
+                            </div>
+                            <div class="form-group">
+                                <label for="ingress_labels">Ingress Labels (key=value format)</label>
+                                <textarea id="ingress_labels" rows="2" 
+                                          placeholder="app=traefik">app=traefik</textarea>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="ingress_annotations">Ingress Annotations (key=value format)</label>
+                            <textarea id="ingress_annotations" rows="2" 
+                                      placeholder="traefik.ingress.kubernetes.io/router.entrypoints=web"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Submit Options -->
+                    <div class="form-section">
+                        <div class="push-option">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="push-to-registry">
+                                <span>Push to OCI Registry (requires registry URL above)</span>
+                            </label>
+                        </div>
+                        <button type="submit" class="submit-btn" id="submit-btn">📦 Create & Download ZIP</button>
+                    </div>
+                </form>
+
+                <!-- Loading State -->
+                <div id="loading" class="loading">
+                    <div class="spinner"></div>
+                    <p id="loading-text">Building scenario...</p>
+                </div>
+
+                <!-- Error Card -->
+                <div id="error-card" class="error-card">
+                    <h3>❌ Error</h3>
+                    <p id="error-message"></p>
+                </div>
+
+                <!-- Result Card -->
+                <div id="result-card" class="result-card">
+                    <h3>✅ Success!</h3>
+                    <p id="result-message"></p>
+                    <div class="result-item">
+                        <label>Scenario Reference:</label>
+                        <code id="scenario-ref"></code>
+                        <button type="button" onclick="copyScenarioRef()">📋 Copy</button>
+                    </div>
+                    <div class="result-item">
+                        <label id="cli-heading">Deploy locally:</label>
+                        <pre id="cli-command"></pre>
+                        <button type="button" onclick="copyCliCommand()">📋 Copy</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

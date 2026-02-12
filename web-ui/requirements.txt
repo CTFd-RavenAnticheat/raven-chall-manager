@@ -1,0 +1,7 @@
+Flask==3.0.0
+Flask-Cors==4.0.0
+requests==2.31.0
+PyYAML==6.0.1
+
+# Chall-Manager SDK (local)
+-e ../sdk/python

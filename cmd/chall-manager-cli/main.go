@@ -96,6 +96,10 @@ func main() {
 								Name:  "max",
 								Value: 0,
 							},
+							&cli.StringSliceFlag{
+								Name:  "image-pull-secrets",
+								Usage: "Image pull secrets to use when pulling container images for this challenge. Can be specified multiple times.",
+							},
 						},
 						Action: func(ctx context.Context, cmd *cli.Command) error {
 							cliChall := ctx.Value(cliChallKey{}).(challenge.ChallengeStoreClient)
@@ -132,13 +136,14 @@ func main() {
 
 							now := time.Now()
 							chall, err := cliChall.CreateChallenge(ctx, &challenge.CreateChallengeRequest{
-								Id:         cmd.String("id"),
-								Scenario:   ref,
-								Timeout:    timeout,
-								Until:      until,
-								Additional: add,
-								Min:        cmd.Int64("min"),
-								Max:        cmd.Int64("max"),
+								Id:               cmd.String("id"),
+								Scenario:         ref,
+								Timeout:          timeout,
+								Until:            until,
+								Additional:       add,
+								Min:              cmd.Int64("min"),
+								Max:              cmd.Int64("max"),
+								ImagePullSecrets: cmd.StringSlice("image-pull-secrets"),
 							}, grpc.MaxCallSendMsgSize(math.MaxInt64))
 							if err != nil {
 								return err
@@ -240,6 +245,14 @@ func main() {
 								Name:  "max",
 								Value: 0,
 							},
+							&cli.StringSliceFlag{
+								Name:  "image-pull-secrets",
+								Usage: "Image pull secrets to use when pulling container images for this challenge. Can be specified multiple times.",
+							},
+							&cli.BoolFlag{
+								Name:  "reset-image-pull-secrets",
+								Usage: "Reset image pull secrets to empty.",
+							},
 						},
 						Action: func(ctx context.Context, cmd *cli.Command) error {
 							cliChall := ctx.Value(cliChallKey{}).(challenge.ChallengeStoreClient)
@@ -318,6 +331,16 @@ func main() {
 									return err
 								}
 								req.Max = cmd.Int64("max")
+							}
+							if cmd.IsSet("image-pull-secrets") {
+								if err := um.Append(req, "image_pull_secrets"); err != nil {
+									return err
+								}
+								req.ImagePullSecrets = cmd.StringSlice("image-pull-secrets")
+							} else if cmd.Bool("reset-image-pull-secrets") {
+								if err := um.Append(req, "image_pull_secrets"); err != nil {
+									return err
+								}
 							}
 							switch cmd.String("strategy") {
 							case "blue-green":
