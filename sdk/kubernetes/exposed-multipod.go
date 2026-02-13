@@ -537,12 +537,13 @@ func (emp *exposedMultipod) provision(ctx *pulumi.Context, args ExposedMultipodA
 							}
 							return refs
 						}).(corev1.LocalObjectReferenceArrayOutput),
-						Containers: pulumi.All(args.Identity(), container.Ports(), container.PacketCapture(), name, args.Label()).ApplyT(func(all []any) corev1.ContainerArray {
+						Containers: pulumi.All(args.Identity(), container.Ports(), container.PacketCapture(), container.Privileged(), name, args.Label()).ApplyT(func(all []any) corev1.ContainerArray {
 							identity := all[0].(string)
 							pbs := all[1].([]PortBinding)
 							packetCapture := all[2].(*bool)
-							containerName := all[3].(string)
-							label := all[4]
+							privileged := all[3].(*bool)
+							containerName := all[4].(string)
+							label := all[5]
 
 							// Build main container
 							mainContainer := corev1.ContainerArgs{
@@ -573,6 +574,10 @@ func (emp *exposedMultipod) provision(ctx *pulumi.Context, args ExposedMultipodA
 								}).(corev1.EnvVarArrayOutput),
 								VolumeMounts: vmounts,
 								Resources: corev1.ResourceRequirementsArgs{
+									Requests: pulumi.ToStringMap(map[string]string{
+										"cpu":    "1m",
+										"memory": "1Mi",
+									}),
 									Limits: pulumi.All(container.LimitCPU(), container.LimitMemory()).ApplyT(func(all []any) map[string]string {
 										out := map[string]string{}
 										if cpu, ok := all[0].(*string); ok && cpu != nil && *cpu != "" {
@@ -584,6 +589,13 @@ func (emp *exposedMultipod) provision(ctx *pulumi.Context, args ExposedMultipodA
 										return out
 									}).(pulumi.StringMapOutput),
 								},
+							}
+
+							// Add SecurityContext if privileged is requested
+							if privileged != nil && *privileged {
+								mainContainer.SecurityContext = corev1.SecurityContextArgs{
+									Privileged: pulumi.BoolPtr(true),
+								}
 							}
 
 							containers := corev1.ContainerArray{mainContainer}
@@ -662,12 +674,12 @@ func (emp *exposedMultipod) provision(ctx *pulumi.Context, args ExposedMultipodA
 									}).(corev1.VolumeMountArrayOutput),
 									Resources: corev1.ResourceRequirementsArgs{
 										Limits: pulumi.ToStringMap(map[string]string{
-											"cpu":    "200m",
-											"memory": "256Mi",
+											"cpu":    "40m",
+											"memory": "80Mi",
 										}),
 										Requests: pulumi.ToStringMap(map[string]string{
-											"cpu":    "100m",
-											"memory": "128Mi",
+											"cpu":    "1m",
+											"memory": "1Mi",
 										}),
 									},
 								})

@@ -145,6 +145,14 @@ func main() {
 				Destination: &global.Conf.OCI.Password,
 				Usage:       `Configure the OCI registry password to pull scenarios from.`,
 			},
+			&cli.IntFlag{
+				Name:        "pulumi-timeout",
+				Sources:     cli.EnvVars("PULUMI_TIMEOUT"),
+				Category:    "scenario",
+				Value:       120,
+				Destination: &global.Conf.PulumiTimeout,
+				Usage:       "Maximum time (in seconds) to wait for Pulumi operations (Up, Destroy, Preview) before timing out. Default is 120 seconds (2 minutes). Set to 0 to disable timeout (not recommended for production).",
+			},
 		},
 		Action: run,
 		Authors: []any{

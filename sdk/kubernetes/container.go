@@ -37,6 +37,10 @@ type Container struct {
 	// PacketCapture enables packet capture for this container when true.
 	// Captures packet payloads, lengths, and timing information.
 	PacketCapture *bool `pulumi:"packetCapture"`
+
+	// Privileged runs the container in privileged mode.
+	// This gives the container access to all devices on the host.
+	Privileged *bool `pulumi:"privileged"`
 }
 
 type ContainerInput interface {
@@ -73,6 +77,10 @@ type ContainerArgs struct {
 	// PacketCapture enables packet capture for this container when true.
 	// Captures packet payloads, lengths, and timing information.
 	PacketCapture pulumi.BoolPtrInput `pulumi:"packetCapture"`
+
+	// Privileged runs the container in privileged mode.
+	// This gives the container access to all devices on the host.
+	Privileged pulumi.BoolPtrInput `pulumi:"privileged"`
 }
 
 func (ContainerArgs) ElementType() reflect.Type {
@@ -166,6 +174,13 @@ func (o ContainerOutput) LimitMemory() pulumi.StringPtrOutput {
 func (o ContainerOutput) PacketCapture() pulumi.BoolPtrOutput {
 	return o.ApplyT(func(v Container) *bool {
 		return v.PacketCapture
+	}).(pulumi.BoolPtrOutput)
+}
+
+// Privileged runs the container in privileged mode.
+func (o ContainerOutput) Privileged() pulumi.BoolPtrOutput {
+	return o.ApplyT(func(v Container) *bool {
+		return v.Privileged
 	}).(pulumi.BoolPtrOutput)
 }
 

@@ -10,6 +10,11 @@ type Configuration struct {
 	Cache     string
 	LogLevel  string
 
+	// PulumiTimeout is the maximum time (in seconds) to wait for Pulumi operations (Up, Destroy, etc.)
+	// before timing out. Default is 120 seconds (2 minutes) to prevent catastrophic blocking.
+	// Set to 0 to disable timeout (not recommended for production).
+	PulumiTimeout int
+
 	Otel struct {
 		Tracing     bool
 		ServiceName string

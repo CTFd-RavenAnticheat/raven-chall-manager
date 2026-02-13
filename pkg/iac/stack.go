@@ -145,22 +145,78 @@ type Result struct {
 }
 
 func (stack *Stack) Up(ctx context.Context) (*Result, error) {
-	res, err := stack.pas.Up(ctx)
+	// Apply timeout if configured (default 120 seconds = 2 minutes)
+	timeout := time.Duration(global.Conf.PulumiTimeout) * time.Second
+	if timeout == 0 {
+		// Default to 2 minutes if not configured
+		timeout = 2 * time.Minute
+	}
+
+	// Create context with timeout
+	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	// Run Pulumi up with timeout
+	global.Log().Info(ctx, "starting stack up operation",
+		zap.Duration("timeout", timeout),
+	)
+
+	res, err := stack.pas.Up(timeoutCtx)
 	if err != nil {
+		// Check if it was a timeout
+		if timeoutCtx.Err() == context.DeadlineExceeded {
+			global.Log().Error(ctx, "stack up operation timed out - this may indicate an infrastructure issue (e.g., waiting for LoadBalancer IP that will never come)",
+				zap.Duration("timeout", timeout),
+				zap.Error(err),
+			)
+			return nil, &errs.ErrInternal{Sub: fmt.Errorf("pulumi operation timed out after %v: %w", timeout, err)}
+		}
 		return nil, err
 	}
+
+	global.Log().Info(ctx, "stack up operation completed successfully")
 	return &Result{
 		sub: res,
 	}, nil
 }
 
 func (stack *Stack) Preview(ctx context.Context) error {
-	_, err := stack.pas.Preview(ctx)
+	// Apply timeout for preview as well
+	timeout := time.Duration(global.Conf.PulumiTimeout) * time.Second
+	if timeout == 0 {
+		timeout = 2 * time.Minute
+	}
+
+	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	_, err := stack.pas.Preview(timeoutCtx)
+	if err != nil && timeoutCtx.Err() == context.DeadlineExceeded {
+		global.Log().Error(ctx, "stack preview operation timed out",
+			zap.Duration("timeout", timeout),
+		)
+		return &errs.ErrInternal{Sub: fmt.Errorf("pulumi preview timed out after %v: %w", timeout, err)}
+	}
 	return err
 }
 
 func (stack *Stack) Down(ctx context.Context) error {
-	_, err := stack.pas.Destroy(ctx)
+	// Apply timeout for destroy operations
+	timeout := time.Duration(global.Conf.PulumiTimeout) * time.Second
+	if timeout == 0 {
+		timeout = 2 * time.Minute
+	}
+
+	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	_, err := stack.pas.Destroy(timeoutCtx)
+	if err != nil && timeoutCtx.Err() == context.DeadlineExceeded {
+		global.Log().Error(ctx, "stack destroy operation timed out",
+			zap.Duration("timeout", timeout),
+		)
+		return &errs.ErrInternal{Sub: fmt.Errorf("pulumi destroy timed out after %v: %w", timeout, err)}
+	}
 	return err
 }
 
@@ -171,9 +227,15 @@ func (stack *Stack) Export(ctx context.Context, res *Result, ist *fsapi.Instance
 	if err != nil {
 		return &errs.ErrInternal{Sub: err}
 	}
+
+	// Check if result has outputs (can be nil if stack operation failed)
+	if res == nil || res.sub.Outputs == nil {
+		return &errs.ErrInternal{Sub: fmt.Errorf("stack outputs are nil - stack operation may have failed")}
+	}
+
 	coninfo, ok := res.sub.Outputs["connection_info"]
 	if !ok {
-		return &errs.ErrInternal{Sub: err}
+		return &errs.ErrInternal{Sub: fmt.Errorf("connection_info output not found in stack outputs")}
 	}
 
 	// For migration purposes, we still support "flag" as a valid output for a while.

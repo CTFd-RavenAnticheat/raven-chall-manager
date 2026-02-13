@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"strconv"
 	"sync"
 
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
@@ -92,4 +93,51 @@ func lenP(o pulumi.StringArrayOutput) int {
 	})
 	wg.Wait()
 	return l
+}
+
+// divideResource divides a Kubernetes resource quantity string by a divisor.
+// Supports CPU (m suffix or no suffix) and memory (Ki, Mi, Gi, etc.).
+// Examples: "500m" / 6 = "83m", "256Mi" / 6 = "42Mi", "1" / 6 = "166m"
+func divideResource(resource string, divisor int) string {
+	if resource == "" || divisor <= 0 {
+		return resource
+	}
+
+	// Parse CPU resources (with 'm' suffix for millicores)
+	if len(resource) > 1 && resource[len(resource)-1] == 'm' {
+		// Millicores: "500m" -> 500
+		if val, err := strconv.Atoi(resource[:len(resource)-1]); err == nil {
+			result := val / divisor
+			if result < 1 {
+				result = 1 // Minimum 1m
+			}
+			return strconv.Itoa(result) + "m"
+		}
+	}
+
+	// Parse memory resources (Ki, Mi, Gi, Ti, Pi, Ei)
+	suffixes := []string{"Ei", "Pi", "Ti", "Gi", "Mi", "Ki"}
+	for _, suffix := range suffixes {
+		if len(resource) > len(suffix) && resource[len(resource)-len(suffix):] == suffix {
+			if val, err := strconv.Atoi(resource[:len(resource)-len(suffix)]); err == nil {
+				result := val / divisor
+				if result < 1 {
+					result = 1 // Minimum 1 unit
+				}
+				return strconv.Itoa(result) + suffix
+			}
+		}
+	}
+
+	// Parse plain CPU cores: "1" or "2" -> convert to millicores
+	if val, err := strconv.Atoi(resource); err == nil {
+		millicores := (val * 1000) / divisor
+		if millicores < 1 {
+			millicores = 1
+		}
+		return strconv.Itoa(millicores) + "m"
+	}
+
+	// If we can't parse it, return original
+	return resource
 }

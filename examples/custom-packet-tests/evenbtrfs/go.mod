@@ -3,7 +3,7 @@ module github.com/CTFd-RavenAnticheat/raven-chall-manager/examples/custom-packet
 go 1.25.4
 
 require (
-	github.com/CTFd-RavenAnticheat/raven-chall-manager/sdk v0.2.0
+	github.com/CTFd-RavenAnticheat/raven-chall-manager/sdk v0.3.0
 	github.com/pulumi/pulumi/sdk/v3 v3.216.0
 )
 

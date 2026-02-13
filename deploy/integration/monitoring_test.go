@@ -197,6 +197,15 @@ func getClient() (*kubernetes.Clientset, *rest.Config, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+	// Fix for kind clusters: replace 0.0.0.0 with 127.0.0.1
+	// 0.0.0.0 is used by kind for the API server bind address, but clients
+	// cannot connect to 0.0.0.0. We replace it with 127.0.0.1.
+	// Note: This may cause certificate validation issues if the cluster's
+	// certificate doesn't include 127.0.0.1. In that case, users should
+	// update their kubeconfig to use the Docker network IP instead.
+	if strings.Contains(config.Host, "://0.0.0.0:") {
+		config.Host = strings.Replace(config.Host, "://0.0.0.0:", "://127.0.0.1:", 1)
+	}
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, nil, err

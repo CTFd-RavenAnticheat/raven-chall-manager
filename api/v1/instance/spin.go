@@ -126,6 +126,16 @@ func SpinUp(ctx context.Context, challengeID string) {
 		logger.Error(ctx, "stack up",
 			zap.Error(err),
 		)
+		// Don't return - try to clean up partial resources if possible
+		// Log the error but continue to prevent blocking the pool
+		logger.Warn(ctx, "instance spin-up failed, will not add to pool")
+
+		// Attempt cleanup of partial deployment
+		if cleanupErr := stack.Down(ctx); cleanupErr != nil {
+			logger.Error(ctx, "failed to cleanup partial deployment after failed spin-up",
+				zap.Error(cleanupErr),
+			)
+		}
 		return
 	}
 
