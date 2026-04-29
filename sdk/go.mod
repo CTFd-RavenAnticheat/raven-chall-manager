@@ -1,15 +1,16 @@
 module github.com/CTFd-RavenAnticheat/raven-chall-manager/sdk
 
-go 1.25.4
+go 1.26.0
 
 require (
+	github.com/ctfer-io/chall-manager/sdk v0.6.5
 	github.com/kubernetes/kompose v1.38.0
 	github.com/pulumi/pulumi-kubernetes/sdk/v4 v4.25.0
-	github.com/pulumi/pulumi/sdk/v3 v3.216.0
+	github.com/pulumi/pulumi/sdk/v3 v3.219.0
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/multierr v1.11.0
-	k8s.io/api v0.35.0
-	k8s.io/apimachinery v0.35.0
+	k8s.io/api v0.35.2
+	k8s.io/apimachinery v0.36.0
 )
 
 require (
@@ -27,7 +28,7 @@ require (
 	github.com/charmbracelet/bubbletea v0.25.0 // indirect
 	github.com/charmbracelet/lipgloss v0.7.1 // indirect
 	github.com/cheggaaa/pb v1.0.29 // indirect
-	github.com/cloudflare/circl v1.6.1 // indirect
+	github.com/cloudflare/circl v1.6.3 // indirect
 	github.com/compose-spec/compose-go/v2 v2.10.0 // indirect
 	github.com/containerd/console v1.0.4 // indirect
 	github.com/containerd/log v0.1.0 // indirect
@@ -64,7 +65,6 @@ require (
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
-	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
@@ -115,8 +115,9 @@ require (
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
 	github.com/zclconf/go-cty v1.14.0 // indirect
-	go.opentelemetry.io/otel v1.37.0 // indirect
-	go.opentelemetry.io/otel/sdk/metric v1.37.0 // indirect
+	go.opentelemetry.io/otel/metric v1.37.0 // indirect
+	go.opentelemetry.io/otel/sdk v1.37.0 // indirect
+	go.opentelemetry.io/otel/trace v1.37.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v4 v4.0.0-rc.3 // indirect
@@ -132,15 +133,15 @@ require (
 	golang.org/x/tools/godoc v0.1.0-deprecated // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250728155136-f173205681a0 // indirect
 	google.golang.org/grpc v1.74.2 // indirect
-	google.golang.org/protobuf v1.36.8 // indirect
+	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/klog/v2 v2.130.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912 // indirect
-	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4 // indirect
+	k8s.io/klog/v2 v2.140.0 // indirect
+	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a // indirect
+	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2 // indirect
 	lukechampine.com/frand v1.4.2 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
-	sigs.k8s.io/structured-merge-diff/v6 v6.3.0 // indirect
+	sigs.k8s.io/structured-merge-diff/v6 v6.3.2 // indirect
 )
